@@ -1,6 +1,6 @@
 import sys,os
 import subprocess
-from PyQt5.QtWidgets import QCheckBox,QRadioButton,QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QAction,qApp,QWidget, QTextEdit
+from PyQt5.QtWidgets import QCheckBox,QFrame,QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QWidget, QTextEdit, QGridLayout
 
 
 
@@ -11,12 +11,21 @@ def main():
     sys.exit(app.exec_())
 
 
+class separator(QFrame):
+    def __init__(self):
+        super().__init__()
+        self.setFrameShape(QFrame.HLine)
+        self.setFrameShadow(QFrame.Sunken)
+        self.setLineWidth(3)
+
+
 class MyWindow(QWidget):
     def __init__(self, *args):
         super().__init__()
         #self.runMode = 'debug'
         self.runMode = ''
         self.init_ui()
+        self.setWindowTitle("KCWI Target Alignment")
 
     def init_ui(self):
         # create objects
@@ -31,6 +40,9 @@ class MyWindow(QWidget):
         #v1_layout.addWidget(self.xy)
         #v1_layout.addWidget(self.xyp)
         #v1_layout.addWidget(self.sl)
+        separator1 = separator()
+        separator2 = separator()
+        separator3 = separator()
 
         # value of offset
         self.lbl1 = QLabel('Value')
@@ -43,32 +55,32 @@ class MyWindow(QWidget):
         h1_layout.addWidget(self.lbl5)
 
         # direction of offset
-        self.lbl2 = QLabel('Move object in guider')
+        self.lbl2 = QLabel('Move object in guider coordinates')
         self.up = QPushButton('Up')
         self.down = QPushButton('Down')
         self.left = QPushButton('Left')
         self.right = QPushButton('Right')
 
-        h2_layout = QHBoxLayout()
-        h2_layout.addWidget(self.lbl2)
-        h2_layout.addWidget(self.up)
-        h2_layout.addWidget(self.down)
-        h2_layout.addWidget(self.left)
-        h2_layout.addWidget(self.right)
+        g2_layout = QGridLayout()
+        g2_layout.addWidget(self.lbl2,0,0,1,3)
+        g2_layout.addWidget(self.up,1,1)
+        g2_layout.addWidget(self.down,3,1)
+        g2_layout.addWidget(self.left,2,0)
+        g2_layout.addWidget(self.right,2,2)
 
         # direction of offset
-        self.lbl3 = QLabel('Move telescope')
+        self.lbl3 = QLabel('Move telescope in absolute coordinates')
         self.e = QPushButton('E')
         self.w = QPushButton('W')
         self.n = QPushButton('N')
         self.s = QPushButton('S')
 
-        h3_layout = QHBoxLayout()
-        h3_layout.addWidget(self.lbl3)
-        h3_layout.addWidget(self.e)
-        h3_layout.addWidget(self.w)
-        h3_layout.addWidget(self.n)
-        h3_layout.addWidget(self.s)
+        g3_layout = QGridLayout()
+        g3_layout.addWidget(self.lbl3, 0, 0, 1, 3)
+        g3_layout.addWidget(self.e, 2, 0)
+        g3_layout.addWidget(self.w, 2, 2)
+        g3_layout.addWidget(self.n, 1, 1)
+        g3_layout.addWidget(self.s, 3, 1)
 
         # direction of offset
         self.lbl4 = QLabel('Move object across slicer')
@@ -82,15 +94,21 @@ class MyWindow(QWidget):
 
         self.te = QTextEdit()
         self.take_guider = QCheckBox('Take guider image after move')
+        self.test_mode = QCheckBox('Test mode (show command, no moves)')
         # layout
         v_layout = QVBoxLayout(self)
         #v_layout.addLayout(v1_layout)
         v_layout.addLayout(h1_layout)
-        v_layout.addLayout(h2_layout)
-        v_layout.addLayout(h3_layout)
+        v_layout.addWidget(separator1)
+        v_layout.addLayout(g2_layout)
+        v_layout.addWidget(separator2)
+        v_layout.addLayout(g3_layout)
+        v_layout.addWidget(separator3)
+        
         v_layout.addLayout(h4_layout)
         v_layout.addWidget(self.te)
         v_layout.addWidget(self.take_guider)
+        v_layout.addWidget(self.test_mode)
 
         self.setLayout(v_layout)
 
@@ -99,16 +117,24 @@ class MyWindow(QWidget):
         for button in buttons:
                 button.clicked.connect(self.btn_click)
 
+
     def run_command(self, command):
         try:
             kroot = os.environ['KROOT']
         except:
             kroot = ''
         cmdline = os.path.join(kroot,'rel','default','bin',command)
+        if self.test_mode.isChecked():
+            self.runMode = 'debug'
+        else:
+            self.runMode = 'normal'
+            
         if self.runMode is not 'debug':
             p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
             output, errors = p.communicate()
-            self.te.setText(str(output))
+            if len(errors)>0:
+                    output = output + errors
+            self.te.setText(str(output.decode()))
         else:
             self.te.setText(str(cmdline))
 
@@ -144,6 +170,7 @@ class MyWindow(QWidget):
 
         if self.take_guider.isChecked():
             self.run_command('saveGuiderImageLocal')
+
 
 
 
