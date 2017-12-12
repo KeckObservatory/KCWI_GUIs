@@ -1,6 +1,6 @@
 import sys,os
 import subprocess
-from PyQt5.QtWidgets import QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QAction,qApp,QWidget, QTextEdit
+from PyQt5.QtWidgets import QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QCheckBox, QTextEdit, QWidget
 
 
 
@@ -17,6 +17,7 @@ class MyWindow(QWidget):
         #self.runMode = 'debug'
         self.runMode = ''
         self.init_ui()
+        self.setWindowTitle("KCWI Exposure Control")
 
     def init_ui(self):
         # create objects
@@ -44,6 +45,7 @@ class MyWindow(QWidget):
         self.fpc = QPushButton('FPC exposure')
         self.pb = QPushButton(self.tr('Save Guider Image'))
         self.te = QTextEdit()
+        self.test_mode = QCheckBox('Test mode (show command, no action)')
 
         # layout
         v_layout = QVBoxLayout(self)
@@ -56,6 +58,7 @@ class MyWindow(QWidget):
         v_layout.addWidget(self.fpc)
         v_layout.addWidget(self.pb)
         v_layout.addWidget(self.te)
+        v_layout.addWidget(self.test_mode)
         self.setLayout(v_layout)
 
         # create button connection
@@ -76,7 +79,9 @@ class MyWindow(QWidget):
             if self.runMode is not 'debug':
                 p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
                 output, errors = p.communicate()
-                self.te.setText(str(output))
+                if len(errors) > 0:
+                    output = output + errors
+                self.te.setText(str(output.decode()))
             else:
                 self.te.setText(str(cmdline))
 
@@ -86,10 +91,16 @@ class MyWindow(QWidget):
         except:
             kroot = ''
         cmdline = os.path.join(kroot,'rel','default','bin',command)
+        if self.test_mode.isChecked():
+            self.runMode = 'debug'
+        else:
+            self.runMode = 'normal'
         if self.runMode is not 'debug':
             p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
             output, errors = p.communicate()
-            self.te.setText(str(output))
+            if len(errors) > 0:
+                output = output + errors
+            self.te.setText(str(output.decode()))
         else:
             self.te.setText(str(cmdline))
 
@@ -100,11 +111,11 @@ class MyWindow(QWidget):
         if sender.text() == 'Science exposure':
             command = 'imtype OBJECT; tintb %f; goib %d' % (float(exptime),int(nexp))
         elif sender.text() == 'Twilight flat':
-            command = 'tintb %f; goibtwi %d' % (float(exptime), int(nexp))
+            command = 'tintb %f; imtype TWIFLAT; goib %d' % (float(exptime), int(nexp))
         elif sender.text() == 'Bias':
             command = 'tintb 0; goib %d' % int(nexp)
         elif sender.text() == 'Dark':
-            command = 'imtype DARL; tintb %f; goib -dark %d' % (float(exptime), int(nexp))
+            command = 'imtype DARK; tintb %f; goib -dark %d' % (float(exptime), int(nexp))
         elif sender.text() == 'FPC exposure':
             command = 'goifpc'
         elif sender.text() == 'Save Guider Image':
