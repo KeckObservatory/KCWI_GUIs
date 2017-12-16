@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-import sys
+import sys, os
 
 class KCWIConfig():
     def __init__(self):
@@ -51,7 +51,7 @@ class KCWIConfig():
         configurationDetail['id'] = str(self.configuration['_id'])
         return configurationDetail
 
-    def save_state(self, configurationName, programId):
+    def save_state(self, configurationName, programId, outputDir):
         output = ''
         configurationDetails = self.get(configurationName,programId)
         #sys.stdout.write( str(configurationDetails) + "\n")
@@ -62,7 +62,7 @@ class KCWIConfig():
         #sys.stdout.write( "Attemting to execute configuration %s\n" % (configurationId))
         sys.stdout.write( "Producing save_state file\n")
         #outdir = self.get_outdir()
-        self.outfile = program+"___"+name+".state"
+        self.outfile = os.path.join(outputDir,program+"___"+name+".state")
         stateFile = open(self.outfile, 'w')
 
         for key in self.elements.keys():
@@ -81,8 +81,8 @@ class KCWIConfig():
         return output
 
 
-def save_state(stateName, programId):
+def save_state(stateName, programId, outputDir):
     kcwi = KCWIConfig()
     kcwi.setServer('observinglogs:27017')
-    output = kcwi.save_state(stateName, programId)
+    output = kcwi.save_state(stateName, programId, outputDir)
     return output
