@@ -87,7 +87,8 @@ class App(QWidget):
         self.reload.clicked.connect(self.refresh_data)
         self.list.clicked.connect(self.ListConfigs)
         self.save.clicked.connect(self.saveStates)
-        self.genfiles.clicked.connect(self.run_generate_cal_script)
+        #self.genfiles.clicked.connect(self.run_generate_cal_script)
+        self.genfiles.clicked.connect(self.showcurrent)
         self.gencals.clicked.connect(self.run_generate_cal_files)
         self.runcals.clicked.connect(self.run_calibrations)
 
@@ -178,72 +179,123 @@ class App(QWidget):
                     currentOutput = 'Simulate mode: saving state %s\n' % (self.tableWidget.item(i, 1).text())
                 output += currentOutput
                 output += '---------------------------------------------------\n'
-        self.output.setText(str(output))
+        self.showOutput(str(output))
 
     def on_radio_button_toggled(self):
         radiobutton = self.sender()
 
         if radiobutton.isChecked():
-            print("Selected mode is %s" % (radiobutton.caltype))
+            self.showOutput("Selected mode is %s" % (radiobutton.caltype))
         self.caltype = radiobutton.caltype
 
-    def run_command(self,command):
-        try:
-            kroot = os.environ['KROOT']
-        except:
-            kroot = ''
-        cmdline = os.path.join(kroot, 'rel', 'default', 'bin', command)
+    # this section of the code deals with running processes using the build-in QProcess class
+    def dataReady(self):
+        cursor = self.output.textCursor()
+        cursor.movePosition(cursor.End)
+        cursor.insertText(str(self.process.readAll(), 'utf-8'))
+        self.output.ensureCursorVisible()
 
+
+    def showOutput(self, text):
+        cursor = self.output.textCursor()
+        cursor.movePosition(cursor.End)
+        cursor.insertText(text)
+        self.output.ensureCursorVisible()
+
+    def showcurrent(self):
+        self.run_command_qprocess('pwd', use_kroot=False)
+
+    def onFinished(self, exitCode, exitStatus):
+        print("Process finished")
+        self.showOutput("Exit code: %d\" % exitCode)
+        self.showOutput("Exit status: %s\" % exitStatus)
+
+    def onStart(self):
+        print("Process started")
+
+    def launchError(self, error):
+        if error != QtCore.QProcess.Crashed:
+            self.showOutput("Warning! There was a problem running the requested function.")
+
+    def run_command_qprocess(self,command, command_arguments=[], use_kroot=False):
+        if use_kroot is True:
+            try:
+                kroot = os.environ['KROOT']
+            except:
+                kroot = ''
+            cmdline = os.path.join(kroot,'rel','default','bin', command)
+        else:
+            cmdline = command
+        self.process = QtCore.QProcess(self)
+        self.process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
+        self.process.readyRead.connect(self.dataReady)
+        self.process.finished.connect(self.onFinished)
+        self.process.error.connect(self.launchError)
         if self.runMode is 'debug':
-            self.output.setText('Simulation mode\n Running:\n %s' % (cmdline))
-            return '',''
-        try:
-            p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output, errors = p.communicate()
-        except RuntimeError:
-            output = ''
-            errors = 'Cannot execute command %s' % command
-        except FileNotFoundError:
-            output = ''
-            errors = 'The command does not exist'
-        self.output.setText('')
-        for line in output.decode().split('\n'):
-            self.output.append(str(line))
-        #self.output.setText(str(output.decode()))
-        if errors:
-            self.output.setText(str(errors))
+            self.showOutput('Simulation mode\n Running:\n %s' % (cmdline))
+        else:
+            self.showOutput('Running: %s\n' % (cmdline))
+            self.process.start(cmdline, command_arguments)
+            self.showOutput('Done\n')
 
-        return output, errors
 
-    def run_local(self,command):
-        cmdline = os.path.join(self.outdir.text(), command)
-        if self.runMode is 'debug':
-            self.output.setText('Simulation mode\n Running:\n %s' % (cmdline))
-            return '',''
-        try:
-            p = subprocess.Popen(['csh',cmdline], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output, errors = p.communicate()
-        except RuntimeError:
-            output = ''
-            errors = 'Cannot execute command %s' % command
-        except FileNotFoundError:
-            output = ''
-            errors = 'The command (%s) does not exist' % (cmdline)
-        self.output.setText('')
-        for line in output.decode().split('\n'):
-            self.output.append(str(line))
-        #self.output.setText(str(output.decode()))
-        if errors:
-            for line in errors.decode().split('\n'):
-                self.output.append(str(errors))
-
-        return output, errors
+    # def run_command(self,command):
+    #     try:
+    #         kroot = os.environ['KROOT']
+    #     except:
+    #         kroot = ''
+    #     cmdline = os.path.join(kroot, 'rel', 'default', 'bin', command)
+    #
+    #     if self.runMode is 'debug':
+    #         self.output.setText('Simulation mode\n Running:\n %s' % (cmdline))
+    #         return '',''
+    #     try:
+    #         p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #         output, errors = p.communicate()
+    #     except RuntimeError:
+    #         output = ''
+    #         errors = 'Cannot execute command %s' % command
+    #     except FileNotFoundError:
+    #         output = ''
+    #         errors = 'The command does not exist'
+    #     self.output.setText('')
+    #     for line in output.decode().split('\n'):
+    #         self.output.append(str(line))
+    #     #self.output.setText(str(output.decode()))
+    #     if errors:
+    #         self.output.setText(str(errors))
+    #
+    #     return output, errors
+    #
+    # def run_local(self,command):
+    #     cmdline = os.path.join(self.outdir.text(), command)
+    #     if self.runMode is 'debug':
+    #         self.output.setText('Simulation mode\n Running:\n %s' % (cmdline))
+    #         return '',''
+    #     try:
+    #         p = subprocess.Popen(['csh',cmdline], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #         output, errors = p.communicate()
+    #     except RuntimeError:
+    #         output = ''
+    #         errors = 'Cannot execute command %s' % command
+    #     except FileNotFoundError:
+    #         output = ''
+    #         errors = 'The command (%s) does not exist' % (cmdline)
+    #     self.output.setText('')
+    #     for line in output.decode().split('\n'):
+    #         self.output.append(str(line))
+    #     #self.output.setText(str(output.decode()))
+    #     if errors:
+    #         for line in errors.decode().split('\n'):
+    #             self.output.append(str(errors))
+    #
+    #     return output, errors
 
 
     def runOutdir(self):
-        output, errors = self.run_command('outdir')
+        self.run_command_qprocess('outdir',use_kroot=True)
         self.usePwd.setCheckState(QtCore.Qt.Unchecked)
-        self.outdir.setText(str(output.decode().replace('\n','')))
+        #self.outdir.setText(str(output.decode().replace('\n','')))
         self.setWorkingDirectory()
 
     def runPwd(self):
@@ -259,14 +311,10 @@ class App(QWidget):
             self.output.setText("Output directory does not exist\n")
 
     def run_generate_cal_script(self):
-        output, errors = self.run_command('generate_cal_script.py')
-        #if output != '':
-        #    self.output.setText(str(output))
+        self.run_command_qprocess('generate_cal_script.py', use_kroot=True)
 
     def run_generate_cal_files(self):
-        output, errors = self.run_local('generate_cal_files.csh')
-        #if output != '':
-        #    self.output.setText(str(output))
+        self.run_command_qprocess('generate_cal_files.csh', use_kroot=False)
 
     def run_calibrations(self):
         if self.caltype == 'all':
@@ -276,9 +324,8 @@ class App(QWidget):
         elif self.caltype == 'dome':
             script = 'dome_calibrations.csh'
 
-        output, errors = self.run_local(script)
-        #if output != '':
-        #    self.output.setText(str(output))
+        self.run_command_qprocess(script, use_kroot=False)
+
 
 
 
