@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QPushButton, QCheckBox, QLineEdit, QLabel, QApplicat
 from pymongo import MongoClient
 from PyQt5 import QtCore
 from ConfigManager import save_state
+#from QtCore import QStringList
 
 class App(QWidget):
     def __init__(self):
@@ -18,6 +19,7 @@ class App(QWidget):
         self.runMode = ''
         self.caltype = 'all'
         self.init_ui()
+        self.processOutput='Click on the right or define'
 
 
     def init_ui(self):
@@ -87,8 +89,8 @@ class App(QWidget):
         self.reload.clicked.connect(self.refresh_data)
         self.list.clicked.connect(self.ListConfigs)
         self.save.clicked.connect(self.saveStates)
-        #self.genfiles.clicked.connect(self.run_generate_cal_script)
-        self.genfiles.clicked.connect(self.showcurrent)
+        self.genfiles.clicked.connect(self.run_generate_cal_script)
+        #self.genfiles.clicked.connect(self.showcurrent)
         self.gencals.clicked.connect(self.run_generate_cal_files)
         self.runcals.clicked.connect(self.run_calibrations)
 
@@ -192,8 +194,11 @@ class App(QWidget):
     def dataReady(self):
         cursor = self.output.textCursor()
         cursor.movePosition(cursor.End)
-        cursor.insertText(str(self.process.readAll(), 'utf-8'))
+        self.processOutput = str(self.process.readAll(), 'utf-8')
+        cursor.insertText("%s\n" % self.processOutput)
+        #cursor.insertText(str(self.process.readAll(), 'utf-8'))
         self.output.ensureCursorVisible()
+        print(self.processOutput)
 
 
     def showOutput(self, text):
@@ -207,8 +212,8 @@ class App(QWidget):
 
     def onFinished(self, exitCode, exitStatus):
         print("Process finished")
-        self.showOutput("Exit code: %d\" % exitCode)
-        self.showOutput("Exit status: %s\" % exitStatus)
+        self.showOutput("Exit code: %d\n" % exitCode)
+        self.showOutput("Exit status: %s\n" % exitStatus)
 
     def onStart(self):
         print("Process started")
@@ -217,7 +222,7 @@ class App(QWidget):
         if error != QtCore.QProcess.Crashed:
             self.showOutput("Warning! There was a problem running the requested function.")
 
-    def run_command_qprocess(self,command, command_arguments=[], use_kroot=False):
+    def run_command_qprocess(self,command, command_arguments=[], use_kroot=False, csh=False):
         if use_kroot is True:
             try:
                 kroot = os.environ['KROOT']
@@ -226,6 +231,7 @@ class App(QWidget):
             cmdline = os.path.join(kroot,'rel','default','bin', command)
         else:
             cmdline = command
+        print("Running: %s\n" % cmdline)
         self.process = QtCore.QProcess(self)
         self.process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
         self.process.readyRead.connect(self.dataReady)
@@ -235,9 +241,12 @@ class App(QWidget):
             self.showOutput('Simulation mode\n Running:\n %s' % (cmdline))
         else:
             self.showOutput('Running: %s\n' % (cmdline))
-            self.process.start(cmdline, command_arguments)
+            if csh is True:
+                self.process.start('csh', [cmdline])
+            else:
+                self.process.start(cmdline, command_arguments)
             self.showOutput('Done\n')
-
+        self.process.waitForFinished()
 
     # def run_command(self,command):
     #     try:
@@ -291,11 +300,10 @@ class App(QWidget):
     #
     #     return output, errors
 
-
     def runOutdir(self):
         self.run_command_qprocess('outdir',use_kroot=True)
         self.usePwd.setCheckState(QtCore.Qt.Unchecked)
-        #self.outdir.setText(str(output.decode().replace('\n','')))
+        self.outdir.setText(self.processOutput.replace("\n",""))
         self.setWorkingDirectory()
 
     def runPwd(self):
@@ -314,7 +322,7 @@ class App(QWidget):
         self.run_command_qprocess('generate_cal_script.py', use_kroot=True)
 
     def run_generate_cal_files(self):
-        self.run_command_qprocess('generate_cal_files.csh', use_kroot=False)
+        self.run_command_qprocess('generate_cal_files.csh', use_kroot=False, csh=True)
 
     def run_calibrations(self):
         if self.caltype == 'all':
@@ -324,7 +332,7 @@ class App(QWidget):
         elif self.caltype == 'dome':
             script = 'dome_calibrations.csh'
 
-        self.run_command_qprocess(script, use_kroot=False)
+        self.run_command_qprocess(script, use_kroot=False, csh=True)
 
 
 
