@@ -23,6 +23,11 @@ class MyWindow(QWidget):
     def __init__(self, *args):
         super().__init__()
         #self.runMode = 'debug'
+        self.objectMoveColor = 'Gold'
+        self.telescopeMoveColor = 'SkyBlue'
+        self.slicerMoveColor = 'Plum'
+        self.takeGuiderImageColor = 'LawnGreen'
+
         self.runMode = ''
         self.init_ui()
         self.setWindowTitle("KCWI Target Alignment")
@@ -43,6 +48,7 @@ class MyWindow(QWidget):
         separator1 = separator()
         separator2 = separator()
         separator3 = separator()
+        separator4 = separator()
 
         # value of offset
         self.lbl1 = QLabel('Value')
@@ -60,6 +66,9 @@ class MyWindow(QWidget):
         self.down = QPushButton('Down')
         self.left = QPushButton('Left')
         self.right = QPushButton('Right')
+        list = [self.up, self.down, self.left, self.right]
+        for button in list:
+            button.setStyleSheet("background-color : %s" % self.objectMoveColor)
 
         g2_layout = QGridLayout()
         g2_layout.addWidget(self.lbl2,0,0,1,3)
@@ -74,6 +83,10 @@ class MyWindow(QWidget):
         self.w = QPushButton('W')
         self.n = QPushButton('N')
         self.s = QPushButton('S')
+        list = [self.e, self.w, self.n, self.s]
+        for button in list:
+            button.setStyleSheet("background-color : %s" % self.telescopeMoveColor)
+        
 
         g3_layout = QGridLayout()
         g3_layout.addWidget(self.lbl3, 0, 0, 1, 3)
@@ -86,6 +99,9 @@ class MyWindow(QWidget):
         self.lbl4 = QLabel('Move object across slicer')
         self.sliceleft = QPushButton('Slice Left')
         self.sliceright = QPushButton('Slice Right')
+        list = [self.sliceleft, self.sliceright]
+        for button in list:
+            button.setStyleSheet("background-color : %s" % self.slicerMoveColor)
         h4_layout = QHBoxLayout()
         h4_layout.addWidget(self.lbl4)
         h4_layout.addWidget(self.sliceleft)
@@ -93,7 +109,7 @@ class MyWindow(QWidget):
 
 
         self.te = QTextEdit()
-        self.take_guider = QCheckBox('Take guider image after move')
+        self.take_guider = QCheckBox('Take guider image after every move')
         self.test_mode = QCheckBox('Test mode (show command, no moves)')
         # layout
         v_layout = QVBoxLayout(self)
@@ -106,6 +122,12 @@ class MyWindow(QWidget):
         v_layout.addWidget(separator3)
         
         v_layout.addLayout(h4_layout)
+        v_layout.addWidget(separator4)
+        self.take_guider_button = QPushButton('Take Guider Image')
+        self.take_guider_button.setStyleSheet("background-color: %s" % self.takeGuiderImageColor)
+
+        v_layout.addWidget(self.take_guider_button)
+
         v_layout.addWidget(self.te)
         v_layout.addWidget(self.take_guider)
         v_layout.addWidget(self.test_mode)
@@ -113,7 +135,7 @@ class MyWindow(QWidget):
         self.setLayout(v_layout)
 
         # associate action
-        buttons = [self.up, self.down, self.right, self.left, self.e, self.w, self.s, self.n, self.sliceleft, self.sliceright]
+        buttons = [self.up, self.down, self.right, self.left, self.e, self.w, self.s, self.n, self.sliceleft, self.sliceright, self.take_guider_button]
         for button in buttons:
                 button.clicked.connect(self.btn_click)
 
@@ -162,6 +184,8 @@ class MyWindow(QWidget):
             command = '%s left %f' % ('moveSlicer',float(value))
         elif sender.text() == 'Slice Right':
             command = '%s right %f' % ('moveSlicer',float(value))
+        elif sender.text() == 'Take Guider Image':
+            command = 'saveGuiderImage'
         else:
             command = None
 
