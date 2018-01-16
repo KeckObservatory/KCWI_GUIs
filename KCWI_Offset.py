@@ -169,7 +169,7 @@ class MyWindow(QWidget):
             self.run_command(command)
 
         if self.take_guider.isChecked():
-            self.run_command('saveGuiderImageLocal')
+            self.run_command('saveGuiderImage')
 
 
 
