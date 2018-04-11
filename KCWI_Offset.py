@@ -185,7 +185,7 @@ class MyWindow(QWidget):
         elif sender.text() == 'Slice Right':
             command = '%s right %f' % ('moveSlicer',float(value))
         elif sender.text() == 'Take Guider Image':
-            command = 'saveGuiderImage'
+            command = 'saveGuiderImageLocal'
         else:
             command = None
 
@@ -193,7 +193,7 @@ class MyWindow(QWidget):
             self.run_command(command)
 
         if self.take_guider.isChecked():
-            self.run_command('saveGuiderImage')
+            self.run_command('saveGuiderImageLocal')
 
 
 
