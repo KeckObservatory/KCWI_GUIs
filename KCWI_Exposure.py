@@ -54,7 +54,15 @@ class MyWindow(QWidget):
         self.update_exptime = QPushButton('Apply/Update')
         self.update_exptime.setStyleSheet("background-color : %s" % self.applyColor)
         self.separator1 = separator()
-
+        # object
+        self.lbl3 = QLabel('Object')
+        h3_layout = QHBoxLayout()
+        self.object = QLineEdit()
+        self.objectUpdate = QPushButton('Update Object')
+        self.objectUpdate.setStyleSheet("background-color : %s" % self.applyColor)
+        h3_layout.addWidget(self.lbl3)
+        h3_layout.addWidget(self.object)
+        self.objectUpdate.clicked.connect(self.change_object)
         # buttons
         self.science = QPushButton('Science exposure')
         self.science.setStyleSheet("background-color : %s" % self.scienceColor)
@@ -78,6 +86,8 @@ class MyWindow(QWidget):
         v_layout.addLayout(h1_layout)
         v_layout.addLayout(h2_layout)
         v_layout.addWidget(self.update_exptime)
+        v_layout.addLayout(h3_layout)
+        v_layout.addWidget(self.objectUpdate)
         v_layout.addWidget(self.separator1)
         v_layout.addWidget(self.science)
         v_layout.addWidget(self.twiflat)
@@ -109,6 +119,23 @@ class MyWindow(QWidget):
             kroot = ""
         if exptime:
             cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'tintb %d' % float(exptime))
+            if self.runMode is not 'debug':
+                p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
+                output, errors = p.communicate()
+                if len(errors) > 0:
+                    output = output + errors
+                self.output.setText(str(output.decode()))
+            else:
+                self.output.setText(str(cmdline))
+
+    def change_object(self):
+        object = self.object.text()
+        try:
+            kroot = os.environ['KROOT']
+        except:
+            kroot = ""
+        if object:
+            cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'object %d' % float(object))
             if self.runMode is not 'debug':
                 p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
                 output, errors = p.communicate()
