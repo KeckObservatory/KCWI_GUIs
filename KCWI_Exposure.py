@@ -135,7 +135,7 @@ class MyWindow(QWidget):
         except:
             kroot = ""
         if object:
-            cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'object %d' % float(object))
+            cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'object %d' % str(object))
             if self.runMode is not 'debug':
                 p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
                 output, errors = p.communicate()
