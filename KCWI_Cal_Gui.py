@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout,QTableWidget, QTableWidgetItem,
 from PyQt5.QtWidgets import QPushButton, QCheckBox, QLineEdit, QLabel, QApplication, QTextEdit
 from pymongo import MongoClient
 from PyQt5 import QtCore
-from ConfigManager import save_state
+from ConfigManager import save_state, state_file_name
 #from QtCore import QStringList
 
 class App(QWidget):
@@ -181,6 +181,12 @@ class App(QWidget):
                     currentOutput = 'Simulate mode: saving state %s\n' % (self.tableWidget.item(i, 1).text())
                 output += currentOutput
                 output += '---------------------------------------------------\n'
+            else:
+                # remote the state file if the state is not "checked"
+                fileName = state_file_name(self.tableWidget.item(i, 1).text(), self.program.text())
+                if os.path.isfile(fileName):
+                    os.unlink(fileName)
+
         self.showOutput(str(output))
 
     def on_radio_button_toggled(self):
@@ -248,57 +254,7 @@ class App(QWidget):
             self.showOutput('Done\n')
         self.process.waitForFinished()
 
-    # def run_command(self,command):
-    #     try:
-    #         kroot = os.environ['KROOT']
-    #     except:
-    #         kroot = ''
-    #     cmdline = os.path.join(kroot, 'rel', 'default', 'bin', command)
-    #
-    #     if self.runMode is 'debug':
-    #         self.output.setText('Simulation mode\n Running:\n %s' % (cmdline))
-    #         return '',''
-    #     try:
-    #         p = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #         output, errors = p.communicate()
-    #     except RuntimeError:
-    #         output = ''
-    #         errors = 'Cannot execute command %s' % command
-    #     except FileNotFoundError:
-    #         output = ''
-    #         errors = 'The command does not exist'
-    #     self.output.setText('')
-    #     for line in output.decode().split('\n'):
-    #         self.output.append(str(line))
-    #     #self.output.setText(str(output.decode()))
-    #     if errors:
-    #         self.output.setText(str(errors))
-    #
-    #     return output, errors
-    #
-    # def run_local(self,command):
-    #     cmdline = os.path.join(self.outdir.text(), command)
-    #     if self.runMode is 'debug':
-    #         self.output.setText('Simulation mode\n Running:\n %s' % (cmdline))
-    #         return '',''
-    #     try:
-    #         p = subprocess.Popen(['csh',cmdline], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #         output, errors = p.communicate()
-    #     except RuntimeError:
-    #         output = ''
-    #         errors = 'Cannot execute command %s' % command
-    #     except FileNotFoundError:
-    #         output = ''
-    #         errors = 'The command (%s) does not exist' % (cmdline)
-    #     self.output.setText('')
-    #     for line in output.decode().split('\n'):
-    #         self.output.append(str(line))
-    #     #self.output.setText(str(output.decode()))
-    #     if errors:
-    #         for line in errors.decode().split('\n'):
-    #             self.output.append(str(errors))
-    #
-    #     return output, errors
+
 
     def runOutdir(self):
         self.run_command_qprocess('outdir',use_kroot=True)

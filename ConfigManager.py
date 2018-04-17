@@ -2,7 +2,9 @@ from pymongo import MongoClient
 import sys, os
 
 class KCWIConfig():
-    def __init__(self):
+    def __init__(self, configurationName, programId):
+        self.configurationName = configurationName
+        self.programId = programId
         # format is : kcwi script/keyword, database keyword, True if mandatory,False if optional
         self.elements = {
             '1': ['statenam','statenam',True],
@@ -22,67 +24,76 @@ class KCWIConfig():
             '15':['camangleb','camangleb',False],
             '16':['focusb','focusb',False]
             }
+        self.server = 'localhost:27017'
+        self.retrieveConfiguration()
 
-    def setServer(self,server):
-        self.server = server
 
 
-    def get(self, configurationName, programId):
+    def retrieveConfiguration(self):
         client = MongoClient(self.server)
         db = client.KCWI
-        self.configuration = db.Configurations.find_one({'statenam': configurationName,'progname': programId})
+        print("Retrieving configuration %s of program %s" % (self.configurationName, self.programId))
+        self.configuration = db.Configurations.find_one({'statenam': self.configurationName,'progname': self.programId})
         client.close()
-        configurationDetail = {}
+        self.configurationDetails = {}
+        print(self.configuration)
         for key in self.elements.keys():
             kcwi_keyword = self.elements[key][0]
             mongo_keyword = self.elements[key][1]
             required = self.elements[key][2]
             if required:
                 try:
-                    configurationDetail[mongo_keyword] = self.configuration[mongo_keyword]
+                    self.configurationDetails[mongo_keyword] = self.configuration[mongo_keyword]
                 except Exception as e:
                     raise KeyError("Missing keyword %s" % (e))
 
             else:
                 try:
-                    configurationDetail[mongo_keyword] = self.configuration[mongo_keyword]
+                    self.configurationDetails[mongo_keyword] = self.configuration[mongo_keyword]
                 except:
-                    configurationDetail[mongo_keyword] = ""
-        configurationDetail['id'] = str(self.configuration['_id'])
-        return configurationDetail
+                    self.configurationDetails[mongo_keyword] = ""
+        self.configurationDetails['id'] = str(self.configuration['_id'])
 
-    def save_state(self, configurationName, programId, outputDir):
+
+    def stateFileName(self):
+        id = str(self.configuration['_id']).replace(" ", "-")
+        name = str(self.configuration['statenam']).replace(" ", "-")
+        program = str(self.configuration['progname']).replace(" ", "-")
+        return os.path.join(program+"___"+name+".state")
+
+
+    def save_state(self,  outputDir):
         output = ''
-        configurationDetails = self.get(configurationName,programId)
-        #sys.stdout.write( str(configurationDetails) + "\n")
-        #id = str(self.configuration['_id'].generation_time).replace(" ","-")
-        id = str(self.configuration['_id']).replace(" ","-")
-        name = str(self.configuration['statenam']).replace(" ","-")
-        program = str(self.configuration['progname']).replace(" ","-")
-        #sys.stdout.write( "Attemting to execute configuration %s\n" % (configurationId))
         sys.stdout.write( "Producing save_state file\n")
-        #outdir = self.get_outdir()
-        self.outfile = os.path.join(outputDir,program+"___"+name+".state")
-        stateFile = open(self.outfile, 'w')
+        outfile = os.path.join(outputDir,self.stateFileName())
+        stateFile = open(outfile, 'w')
 
         for key in self.elements.keys():
             kcwi_keyword = self.elements[key][0]
             mongo_keyword = self.elements[key][1]
             try:
-                value = configurationDetails[mongo_keyword]
+                value = self.configurationDetails[mongo_keyword]
                 if value !="":
                     output += "%s = %s\n" % (kcwi_keyword, value)
                     sys.stdout.write( "%s = %s\n" % (kcwi_keyword, value))
                     stateFile.write( "%s = %s\n" % (kcwi_keyword, value))
             except:
                 pass
+        id = str(self.configuration['_id']).replace(" ", "-")
         stateFile.write( "%s = %s\n" % ("stateid",str(id)))
         stateFile.close()
         return output
 
 
 def save_state(stateName, programId, outputDir):
-    kcwi = KCWIConfig()
-    kcwi.setServer('observinglogs:27017')
-    output = kcwi.save_state(stateName, programId, outputDir)
+    kcwi = KCWIConfig(stateName, programId)
+    output = kcwi.save_state(outputDir)
     return output
+
+def state_file_name(stateName, programId):
+    kcwi = KCWIConfig(stateName, programId)
+    fileName = kcwi.stateFileName()
+    return fileName
+
+
+
