@@ -24,7 +24,7 @@ class KCWIConfig():
             '15':['camangleb','camangleb',False],
             '16':['focusb','focusb',False]
             }
-        self.server = 'localhost:27017'
+        self.server = 'observinglogs:27017'
         self.retrieveConfiguration()
 
 

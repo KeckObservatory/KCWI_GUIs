@@ -57,9 +57,9 @@ class App(QWidget):
 
         self.reload = QPushButton('Reload configurations')
         self.list = QPushButton('List checked configurations')
-        self.save = QPushButton('Save states to disk')
-        self.genfiles = QPushButton('1 - Generate calibration scripts')
-        self.gencals = QPushButton('2 - Generate calibration flat files')
+        self.save = QPushButton('1 - Save states to disk')
+        self.genfiles = QPushButton('2 - Generate calibration scripts')
+        self.gencals = QPushButton('3 - Generate calibration flat files')
 
         # radio buttons for calibrations
         self.hlayout3 = QHBoxLayout()
@@ -80,7 +80,7 @@ class App(QWidget):
         self.radiobutton.toggled.connect(self.on_radio_button_toggled)
         self.hlayout3.addWidget(self.radiobutton)
 
-        self.runcals = QPushButton('3 - Run cals')
+        self.runcals = QPushButton('4 - Run cals')
 
         buttons = [self.reload,self.list,self.save, self.gencals, self.genfiles, self.runcals]
         for button in buttons:
@@ -99,9 +99,9 @@ class App(QWidget):
         self.layout.addWidget(self.tableWidget)
 
         self.vlayout1 = QVBoxLayout()
-        self.vlayout1.addWidget(self.list)
-        self.vlayout1.addWidget(self.save)
+        #self.vlayout1.addWidget(self.list)
         self.vlayout1.addWidget(self.reload)
+        self.vlayout1.addWidget(self.save)
         self.vlayout1.addWidget(self.genfiles)
         self.vlayout1.addWidget(self.gencals)
         self.vlayout1.addLayout(self.hlayout3)
