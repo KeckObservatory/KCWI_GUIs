@@ -60,9 +60,21 @@ class MyWindow(QWidget):
         self.object = QLineEdit()
         self.objectUpdate = QPushButton('Update Object')
         self.objectUpdate.setStyleSheet("background-color : %s" % self.applyColor)
+
         h3_layout.addWidget(self.lbl3)
         h3_layout.addWidget(self.object)
         self.objectUpdate.clicked.connect(self.change_object)
+
+        # skypa
+        self.lbl4 = QLabel('Sky PA')
+        h4_layout = QHBoxLayout()
+        self.skypa = QLineEdit()
+        self.skypaUpdate = QPushButton('Send Sky PA')
+        self.skypaUpdate.setStyleSheet("background-color : %s" % self.applyColor)       
+        h4_layout.addWidget(self.lbl4)
+        h4_layout.addWidget(self.skypa)
+        self.skypaUpdate.clicked.connect(self.change_skypa)
+
         # buttons
         self.science = QPushButton('Science exposure')
         self.science.setStyleSheet("background-color : %s" % self.scienceColor)
@@ -88,6 +100,8 @@ class MyWindow(QWidget):
         v_layout.addWidget(self.update_exptime)
         v_layout.addLayout(h3_layout)
         v_layout.addWidget(self.objectUpdate)
+        v_layout.addLayout(h4_layout)
+        v_layout.addWidget(self.skypaUpdate)
         v_layout.addWidget(self.separator1)
         v_layout.addWidget(self.science)
         v_layout.addWidget(self.twiflat)
@@ -136,6 +150,23 @@ class MyWindow(QWidget):
             kroot = ""
         if object:
             cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'object %s' % str(object))
+            if self.runMode is not 'debug':
+                p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
+                output, errors = p.communicate()
+                if len(errors) > 0:
+                    output = output + errors
+                self.output.setText(str(output.decode()))
+            else:
+                self.output.setText(str(cmdline))
+
+    def change_skypa(self):
+        skypa = self.skypa.text()
+        try:
+            kroot = os.environ['KROOT']
+        except:
+            kroot = ""
+        if skypa:
+            cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'skypa %s' % str(object))
             if self.runMode is not 'debug':
                 p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
                 output, errors = p.communicate()
