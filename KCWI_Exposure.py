@@ -90,6 +90,7 @@ class MyWindow(QWidget):
         #self.pb = QPushButton(self.tr('Save Guider Image'))
         self.output = QTextEdit()
         self.test_mode = QCheckBox('Test mode (show command, no action)')
+        self.test_mode.clicked.connect(self.setRunMode)
         self.abort_script = QPushButton('Abort script')
         self.abort_script.setStyleSheet("background-color : %s" % self.abortColor)
 
@@ -166,7 +167,7 @@ class MyWindow(QWidget):
         except:
             kroot = ""
         if skypa:
-            cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'skypa %s' % str(object))
+            cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'skypa %f' % float(skypa))
             if self.runMode is not 'debug':
                 p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
                 output, errors = p.communicate()
@@ -183,6 +184,7 @@ class MyWindow(QWidget):
         cursor.insertText("%s\n" % self.processOutput)
         #cursor.insertText(str(self.process.readAll(), 'utf-8'))
         self.output.ensureCursorVisible()
+        cursor.movePosition(cursor.End)
         print(self.processOutput)
 
 
@@ -203,6 +205,13 @@ class MyWindow(QWidget):
     def launchError(self, error):
         if error != QtCore.QProcess.Crashed:
             self.showOutput("Warning! There was a problem running the requested function.")
+    
+    def setRunMode(self):
+        if self.test_mode.isChecked():
+            self.runMode = 'debug'
+        else:
+            self.runMode = 'normal'
+
 
     def run_command(self,command, command_arguments=[], use_kroot=False, csh=False):
         if use_kroot is True:
@@ -221,6 +230,7 @@ class MyWindow(QWidget):
         self.process.error.connect(self.launchError)
         if command == 'goib' or command == 'goifpc':
             self.currentScriptProcess = self.process
+
         if self.runMode is 'debug':
             self.showOutput('Simulation mode\n Running:\n %s' % (cmdline))
         else:
@@ -238,10 +248,6 @@ class MyWindow(QWidget):
     #     except:
     #         kroot = ''
     #     cmdline = os.path.join(kroot,'rel','default','bin',command)
-    #     if self.test_mode.isChecked():
-    #         self.runMode = 'debug'
-    #     else:
-    #         self.runMode = 'normal'
     #     if self.runMode is not 'debug':
     #         p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
     #         output, errors = p.communicate()
