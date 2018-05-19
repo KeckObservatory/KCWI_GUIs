@@ -123,6 +123,9 @@ class App(QWidget):
     def load_data(self):
         client = MongoClient('observinglogs')
         db = client.KCWI
+        print(self.programId)
+        if self.programId == "":
+            return
         configurations = list(
             db.Configurations.find({'progname': self.programId}, {'statenam': 1, 'image_slicer': 1, 'filterb': 1, 'gratingb': 1,
                                                           'cwaveb': 1, 'pwaveb': 1, 'binningb': 1}))
