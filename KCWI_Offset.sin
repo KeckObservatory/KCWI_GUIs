@@ -1,3 +1,6 @@
+#! @KPYTHON3@
+
+
 import sys,os
 import subprocess
 from PyQt5.QtWidgets import QCheckBox,QFrame,QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QWidget, QTextEdit, QGridLayout
