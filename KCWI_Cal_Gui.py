@@ -141,13 +141,20 @@ class App(QWidget):
             qhboxlayout.addWidget(checkbox)
             qhboxlayout.setContentsMargins(0, 0, 0, 0)
             self.tableWidget.setCellWidget(currentRow, 0, qwidget)
-            self.tableWidget.setItem(currentRow, 1, QTableWidgetItem(configuration['statenam']))
-            self.tableWidget.setItem(currentRow, 2, QTableWidgetItem(configuration['image_slicer']))
-            self.tableWidget.setItem(currentRow, 3, QTableWidgetItem(configuration['filterb']))
-            self.tableWidget.setItem(currentRow, 4, QTableWidgetItem(configuration['gratingb']))
-            self.tableWidget.setItem(currentRow, 5, QTableWidgetItem(configuration['cwaveb']))
-            self.tableWidget.setItem(currentRow, 6, QTableWidgetItem(configuration['pwaveb']))
-            self.tableWidget.setItem(currentRow, 7, QTableWidgetItem(configuration['binningb']))
+            rows = [1,2,3,4,5,6,7]
+            columns = ['statenam','image_slicer','filterb','gratingb','cwaveb','pwaveb','binningb']
+            for index in range(len(rows)):
+                try:
+                    self.tableWidget.setItem(currentRow,rows[index], QTableWidgetItem(configuration[columns[index]]))
+                except:
+                    self.tableWidget.setItem(currentRow,rows[index], QTableWidgetItem("!!!MISSING!!!"))
+            #self.tableWidget.setItem(currentRow, 1, QTableWidgetItem(configuration['statenam']))
+            #self.tableWidget.setItem(currentRow, 2, QTableWidgetItem(configuration['image_slicer']))
+            #self.tableWidget.setItem(currentRow, 3, QTableWidgetItem(configuration['filterb']))
+            #self.tableWidget.setItem(currentRow, 4, QTableWidgetItem(configuration['gratingb']))
+            #self.tableWidget.setItem(currentRow, 5, QTableWidgetItem(configuration['cwaveb']))
+            #self.tableWidget.setItem(currentRow, 6, QTableWidgetItem(configuration['pwaveb']))
+            #self.tableWidget.setItem(currentRow, 7, QTableWidgetItem(configuration['binningb']))
             currentRow += 1
 
 
