@@ -3,7 +3,7 @@
 import sys,os
 import subprocess
 from PyQt5.QtWidgets import QFrame, QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QCheckBox, QTextEdit, QWidget
-from PyQt5 import QtCore
+from PyQt5.QtCore import QThread
 
 
 
@@ -40,12 +40,15 @@ class MyWindow(QWidget):
         # labels
         self.lbl1 = QLabel('Exptime')
         self.lbl2 = QLabel('Number of exp.')
+        self.lbl_exptime_name = QLabel('Progress')
         h1_layout = QHBoxLayout()
         h1_layout.addWidget(self.lbl1)
         h1_layout.addWidget(self.lbl2)
+        h1_layout.addWidget(self.lbl_exptime_name)
         # entry fields
         self.exptime = QLineEdit()
         self.nexp = QLineEdit()
+        self.lbl_exptime_progress = QLabel('0')
         h2_layout = QHBoxLayout()
         h2_layout.addWidget(self.exptime)
         h2_layout.addWidget(self.nexp)
@@ -125,6 +128,34 @@ class MyWindow(QWidget):
 
         self.update_exptime.clicked.connect(self.change_exptime)
 
+    ########## DEAL WITH UPDATE OF THE ELAPTIME LABEL
+
+    def update_elaptime(self, value):
+        self.lbl_exptime_progress.setText(value)
+
+    self.elaptime_thread = elaptimeMonitor()
+
+    self.connect(self.elaptime_thread, SIGNAL('update_elaptime(QString)'), self.update_elaptime)
+
+    self.elaptime_thread.start()
+
+    class elaptimeMonitor(QThread):
+        def __init__(self):
+            QThread.__init__(self)
+
+        del __del__(self):
+            self.wait()
+
+        def callback(self, keyword, value):
+            self.emit(SIGNAL('update_elaptime(QString)'), value)
+
+        def run(self):
+            elaptime = ktl.cache('kbds','elaptime')
+            elaptime.callback(callback)
+            elaptime.monitor()
+            while True:
+                self.sleep(1)
+            
     def abortScript(self):
         self.currentScriptProcess.kill()
 
