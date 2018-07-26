@@ -3,8 +3,8 @@
 import sys,os
 import subprocess
 from PyQt5.QtWidgets import QFrame, QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QCheckBox, QTextEdit, QWidget
-from PyQt5.QtCore import QThread
-
+from PyQt5.QtCore import QThread, pyqtSignal
+import ktl
 
 
 def main():
@@ -20,6 +20,26 @@ class separator(QFrame):
         self.setFrameShadow(QFrame.Sunken)
         self.setLineWidth(3)
 
+class elaptimeMonitor(QThread):
+    elaptime = pyqtSignal('QString')
+
+    def __init__(self):
+        QThread.__init__(self)
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        def callback(keyword):
+            value = "%.1f" % keyword['binary']
+            self.elaptime.emit(str(value))
+        elaptime = ktl.cache('kbds','elaptime')
+        elaptime.callback(callback)
+        elaptime.monitor()
+        while True:
+            self.sleep(1)
+
+
 class MyWindow(QWidget):
     def __init__(self, *args):
         super().__init__()
@@ -34,6 +54,8 @@ class MyWindow(QWidget):
         self.abortColor = 'Red'
         self.init_ui()
         self.setWindowTitle("KCWI Exposure Control")
+        self.start_elaptime_monitor()
+
 
     def init_ui(self):
         # create objects
@@ -52,6 +74,7 @@ class MyWindow(QWidget):
         h2_layout = QHBoxLayout()
         h2_layout.addWidget(self.exptime)
         h2_layout.addWidget(self.nexp)
+        h2_layout.addWidget(self.lbl_exptime_progress)
         # set defaults
         self.exptime.setText('1')
         self.nexp.setText('1')
@@ -133,29 +156,12 @@ class MyWindow(QWidget):
     def update_elaptime(self, value):
         self.lbl_exptime_progress.setText(value)
 
-    self.elaptime_thread = elaptimeMonitor()
-
-    self.connect(self.elaptime_thread, SIGNAL('update_elaptime(QString)'), self.update_elaptime)
-
-    self.elaptime_thread.start()
-
-    class elaptimeMonitor(QThread):
-        def __init__(self):
-            QThread.__init__(self)
-
-        del __del__(self):
-            self.wait()
-
-        def callback(self, keyword, value):
-            self.emit(SIGNAL('update_elaptime(QString)'), value)
-
-        def run(self):
-            elaptime = ktl.cache('kbds','elaptime')
-            elaptime.callback(callback)
-            elaptime.monitor()
-            while True:
-                self.sleep(1)
-            
+    def start_elaptime_monitor(self):
+        self.elaptime_thread = elaptimeMonitor()
+        self.elaptime_thread.elaptime.connect(self.update_elaptime)
+        self.elaptime_thread.start()
+    
+        
     def abortScript(self):
         self.currentScriptProcess.kill()
 
