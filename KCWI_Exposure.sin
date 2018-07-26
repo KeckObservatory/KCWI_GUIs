@@ -2,7 +2,7 @@
 
 import sys,os
 import subprocess
-from PyQt5.QtWidgets import QFrame, QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QCheckBox, QTextEdit, QWidget
+from PyQt5.QtWidgets import QFrame, QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QCheckBox, QTextEdit, QWidget, QProgressBar
 from PyQt5.QtCore import QThread, pyqtSignal
 import ktl
 
@@ -20,8 +20,10 @@ class separator(QFrame):
         self.setFrameShadow(QFrame.Sunken)
         self.setLineWidth(3)
 
-class elaptimeMonitor(QThread):
+class keywordMonitor(QThread):
     elaptime = pyqtSignal('QString')
+    pixpercent = pyqtSignal('QFloat')
+    expprog = pyqtSignal('QFloat')
 
     def __init__(self):
         QThread.__init__(self)
@@ -30,12 +32,29 @@ class elaptimeMonitor(QThread):
         self.wait()
 
     def run(self):
-        def callback(keyword):
+        def elaptime_callback(keyword):
             value = "%.1f" % keyword['binary']
             self.elaptime.emit(str(value))
-        elaptime = ktl.cache('kbds','elaptime')
-        elaptime.callback(callback)
-        elaptime.monitor()
+
+        def pixpercent_callback(keyword):
+            value = "%.1f" % keyword['binary']
+            self.pixpercent.emit(value)
+
+        def expprog_callback(keyword):
+            value = "%.1f" % keyword['binary']
+            self.expprog.emit(value)
+
+        elaptime = ktl.cache('kbds', 'elaptime')
+        elaptime.callback(elaptime_callback)
+        pixpercent = ktl.cache('kbds', 'pixpercent')
+        pixpercent.callback(pixpercent_callback)
+        expprog = ktl.cache('kbds', 'expprog')
+        expprog.callback(expprog_callback)
+        
+        monitored_keywords = [elaptime, pixpercent, expprog]
+        for keyword in monitored_keywords:
+            keyword.monitor()
+
         while True:
             self.sleep(1)
 
@@ -60,6 +79,7 @@ class MyWindow(QWidget):
     def init_ui(self):
         # create objects
         # labels
+        ########### EXPOSURE
         self.lbl1 = QLabel('Exptime')
         self.lbl2 = QLabel('Number of exp.')
         self.lbl_exptime_name = QLabel('Progress')
@@ -82,7 +102,7 @@ class MyWindow(QWidget):
         self.update_exptime = QPushButton('Apply/Update')
         self.update_exptime.setStyleSheet("background-color : %s" % self.applyColor)
         self.separator1 = separator()
-        # object
+        ############ OBJECT
         self.lbl3 = QLabel('Object')
         h3_layout = QHBoxLayout()
         self.object = QLineEdit()
@@ -93,7 +113,7 @@ class MyWindow(QWidget):
         h3_layout.addWidget(self.object)
         self.objectUpdate.clicked.connect(self.change_object)
 
-        # skypa
+        ############# SKYPA
         self.lbl4 = QLabel('Sky PA')
         h4_layout = QHBoxLayout()
         self.skypa = QLineEdit()
@@ -104,25 +124,32 @@ class MyWindow(QWidget):
         self.skypaUpdate.clicked.connect(self.change_skypa)
 
         # buttons
+        # science exposure
         self.science = QPushButton('Science exposure')
         self.science.setStyleSheet("background-color : %s" % self.scienceColor)
+        # twilight flat
         self.twiflat = QPushButton('Twilight flat')
         self.twiflat.setStyleSheet("background-color : %s" % self.twilightColor)
+        # Bias
         self.bias = QPushButton('Bias')
         self.bias.setStyleSheet("background-color : %s" % self.biasColor)
+        # dark
         self.dark = QPushButton('Dark')
         self.dark.setStyleSheet("background-color : %s" % self.darkColor)
+        # focal plane camera
         self.fpc = QPushButton('FPC exposure')
         self.fpc.setStyleSheet("background-color : %s" % self.fpcColor)
         self.separator2 = separator()
-        #self.pb = QPushButton(self.tr('Save Guider Image'))
+
+
+        # output
         self.output = QTextEdit()
         self.test_mode = QCheckBox('Test mode (show command, no action)')
         self.test_mode.clicked.connect(self.setRunMode)
         self.abort_script = QPushButton('Abort script')
         self.abort_script.setStyleSheet("background-color : %s" % self.abortColor)
 
-        # layout
+        # exposure vertical layout
         v_layout = QVBoxLayout(self)
         v_layout.addLayout(h1_layout)
         v_layout.addLayout(h2_layout)
@@ -141,7 +168,29 @@ class MyWindow(QWidget):
         v_layout.addWidget(self.abort_script)
         v_layout.addWidget(self.output)
         v_layout.addWidget(self.test_mode)
-        self.setLayout(v_layout)
+
+
+        ### STATUS
+
+        # Exposure progress bar
+        self.exposure_bar_lbl = QLabel('Exposure progress')
+        self.exposure_bar = QProgressBar()
+        self.readout_bar_lbl = QLabel('Readout progress')
+        self.readout_bar = QProgressBar()
+        status_layout = QVBoxLayout(self)
+        status_layout.addWidget(self.exposure_bar_lbl)
+        status_layout.addWidget(self.exposure_bar)
+        status_layout.addWidget(self.readout_bar_lbl)
+        status_layout.addWidget(self.readout_bar)
+
+
+        # combine the two vertical layouts
+        main_layout = QHBoxLayout(self)
+        main_layout.addLayout(v_layout)
+        main_layout.addLayout(status_layout)
+
+
+        self.setLayout(main_layout)
 
         # create button connection
         buttons = [self.science,self.twiflat,self.bias,self.dark,self.fpc]
@@ -151,15 +200,23 @@ class MyWindow(QWidget):
 
         self.update_exptime.clicked.connect(self.change_exptime)
 
-    ########## DEAL WITH UPDATE OF THE ELAPTIME LABEL
+    ########## UPDATE keywords
 
     def update_elaptime(self, value):
-        self.lbl_exptime_progress.setText(value)
+        self.elaptime_thread.setText(value)
+
+    def update_pixpercent(self, value):
+        self.readout_bar.setValue(value)
+
+    def update_expprog(self, value):
+        self.exposure_bar.setValue(value)
 
     def start_elaptime_monitor(self):
-        self.elaptime_thread = elaptimeMonitor()
-        self.elaptime_thread.elaptime.connect(self.update_elaptime)
-        self.elaptime_thread.start()
+        self.keyword_thread = keywordMonitor()
+        self.keyword_thread.elaptime.connect(self.update_elaptime)
+        self.keyword_thread.pixpercent.connect(self.update_pixpercent)
+        self.keyword_thread.expprog.connect(self.update_expprog)
+        self.keyword_thread.start()
     
         
     def abortScript(self):
