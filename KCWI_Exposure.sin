@@ -2,8 +2,9 @@
 
 import sys,os
 import subprocess
-from PyQt5.QtWidgets import QFrame, QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QCheckBox, QTextEdit, QWidget, QProgressBar
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtWidgets import QFrame, QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QCheckBox, QTextEdit, QWidget, QProgressBar, QGridLayout
+from PyQt5.QtCore import QThread, pyqtSignal, QProcess
+from PyQt5 import QtGui
 import ktl
 
 
@@ -19,11 +20,14 @@ class separator(QFrame):
         self.setFrameShape(QFrame.HLine)
         self.setFrameShadow(QFrame.Sunken)
         self.setLineWidth(3)
+        #self.setFixedWidth(100)
 
 class keywordMonitor(QThread):
     elaptime = pyqtSignal('QString')
-    pixpercent = pyqtSignal('QFloat')
-    expprog = pyqtSignal('QFloat')
+    pixpercent = pyqtSignal(float)
+    expprog = pyqtSignal(float)
+    progname = pyqtSignal('QString')
+    statenam = pyqtSignal('QString')
 
     def __init__(self):
         QThread.__init__(self)
@@ -38,11 +42,19 @@ class keywordMonitor(QThread):
 
         def pixpercent_callback(keyword):
             value = "%.1f" % keyword['binary']
-            self.pixpercent.emit(value)
+            self.pixpercent.emit(float(value))
 
         def expprog_callback(keyword):
             value = "%.1f" % keyword['binary']
-            self.expprog.emit(value)
+            self.expprog.emit(float(value))
+
+        def progname_callback(keyword):
+            value = keyword['binary']
+            self.progname.emit(str(value))
+            
+        def statenam_callback(keyword):
+            value = keyword['binary']
+            self.statenam.emit(str(value))
 
         elaptime = ktl.cache('kbds', 'elaptime')
         elaptime.callback(elaptime_callback)
@@ -50,8 +62,12 @@ class keywordMonitor(QThread):
         pixpercent.callback(pixpercent_callback)
         expprog = ktl.cache('kbds', 'expprog')
         expprog.callback(expprog_callback)
+        progname = ktl.cache('kcwi','progname')
+        progname.callback(progname_callback)
+        statenam = ktl.cache('kcwi', 'statenam')
+        statenam.callback(statenam_callback)
         
-        monitored_keywords = [elaptime, pixpercent, expprog]
+        monitored_keywords = [elaptime, pixpercent, expprog, progname, statenam]
         for keyword in monitored_keywords:
             keyword.monitor()
 
@@ -71,9 +87,13 @@ class MyWindow(QWidget):
         self.darkColor = 'Gold'
         self.fpcColor = 'Orange'
         self.abortColor = 'Red'
+        self.buttonSize = 120
+        self.Bold = QtGui.QFont()
+        self.Bold.setBold(True)
         self.init_ui()
         self.setWindowTitle("KCWI Exposure Control")
         self.start_elaptime_monitor()
+
 
 
     def init_ui(self):
@@ -81,116 +101,158 @@ class MyWindow(QWidget):
         # labels
         ########### EXPOSURE
         self.lbl1 = QLabel('Exptime')
-        self.lbl2 = QLabel('Number of exp.')
-        self.lbl_exptime_name = QLabel('Progress')
-        h1_layout = QHBoxLayout()
-        h1_layout.addWidget(self.lbl1)
-        h1_layout.addWidget(self.lbl2)
-        h1_layout.addWidget(self.lbl_exptime_name)
-        # entry fields
         self.exptime = QLineEdit()
+        #self.exptime.setFixedWidth(60)
+
+        self.lbl2 = QLabel('Number of exp.')
         self.nexp = QLineEdit()
-        self.lbl_exptime_progress = QLabel('0')
-        h2_layout = QHBoxLayout()
-        h2_layout.addWidget(self.exptime)
-        h2_layout.addWidget(self.nexp)
-        h2_layout.addWidget(self.lbl_exptime_progress)
+        #self.nexp.setFixedWidth(60)
+        self.update_exptime = QPushButton('Set Exptime')
+        self.update_exptime.setStyleSheet("background-color : %s" % self.applyColor)
+        #self.update_exptime.setFixedWidth(self.buttonSize)
+        #self.update_nexp = QPushButton('Set Nexp')a
+        #self.update_nexp.setStyleSheet("background-color : %s" % self.applyColor)
+        #self.update_nexp.setFixedWidth(self.buttonSize)
+
         # set defaults
         self.exptime.setText('1')
         self.nexp.setText('1')
-        # update the exposure time
-        self.update_exptime = QPushButton('Apply/Update')
-        self.update_exptime.setStyleSheet("background-color : %s" % self.applyColor)
+
+        grid_layout = QGridLayout()
+        grid_layout.addWidget(self.lbl1,0,0)
+        grid_layout.addWidget(self.exptime,1,0)
+        grid_layout.addWidget(self.update_exptime,2,0)
+
+        grid_layout.addWidget(self.lbl2, 0,1)
+        grid_layout.addWidget(self.nexp, 1,1)
+        #h2_layout.addWidget(self.update_nexp)
+
+
+
         self.separator1 = separator()
         ############ OBJECT
         self.lbl3 = QLabel('Object')
-        h3_layout = QHBoxLayout()
         self.object = QLineEdit()
-        self.objectUpdate = QPushButton('Update Object')
+        #self.object.setFixedWidth(100)
+        self.objectUpdate = QPushButton('Set Object')
         self.objectUpdate.setStyleSheet("background-color : %s" % self.applyColor)
-
-        h3_layout.addWidget(self.lbl3)
-        h3_layout.addWidget(self.object)
+        #self.objectUpdate.setFixedWidth(self.buttonSize)
+        #h3_layout = QHBoxLayout()
+        grid_layout.addWidget(self.lbl3,0,2)
+        grid_layout.addWidget(self.object,1,2)
         self.objectUpdate.clicked.connect(self.change_object)
+        grid_layout.addWidget(self.objectUpdate,2,2)
+
 
         ############# SKYPA
         self.lbl4 = QLabel('Sky PA')
-        h4_layout = QHBoxLayout()
         self.skypa = QLineEdit()
-        self.skypaUpdate = QPushButton('Send Sky PA')
+        #self.skypa.setFixedWidth(100)
+        self.skypaUpdate = QPushButton('Set Sky PA')
         self.skypaUpdate.setStyleSheet("background-color : %s" % self.applyColor)       
-        h4_layout.addWidget(self.lbl4)
-        h4_layout.addWidget(self.skypa)
+        #self.skypaUpdate.setFixedWidth(self.buttonSize)
+        #h4_layout = QHBoxLayout()
+        grid_layout.addWidget(self.lbl4,0,3)
+        grid_layout.addWidget(self.skypa,1,3)
+        grid_layout.addWidget(self.skypaUpdate,2,3)
         self.skypaUpdate.clicked.connect(self.change_skypa)
+
 
         # buttons
         # science exposure
         self.science = QPushButton('Science exposure')
         self.science.setStyleSheet("background-color : %s" % self.scienceColor)
+        #self.science.setFixedWidth(self.buttonSize)
         # twilight flat
         self.twiflat = QPushButton('Twilight flat')
         self.twiflat.setStyleSheet("background-color : %s" % self.twilightColor)
+        #self.twiflat.setFixedWidth(self.buttonSize        )
         # Bias
         self.bias = QPushButton('Bias')
         self.bias.setStyleSheet("background-color : %s" % self.biasColor)
+        #self.bias.setFixedWidth(self.buttonSize)
         # dark
         self.dark = QPushButton('Dark')
         self.dark.setStyleSheet("background-color : %s" % self.darkColor)
+        #self.dark.setFixedWidth(self.buttonSize)
         # focal plane camera
         self.fpc = QPushButton('FPC exposure')
         self.fpc.setStyleSheet("background-color : %s" % self.fpcColor)
+        #self.fpc.setFixedWidth(self.buttonSize)
         self.separator2 = separator()
+
+        buttons = QVBoxLayout()
+        buttons.addWidget(self.science)
+        buttons.addWidget(self.twiflat)
+        buttons.addWidget(self.bias)
+        buttons.addWidget(self.dark)
+        buttons.addWidget(self.fpc)
+
+
+        # Exposure progress bar
+        label_style = 'border: 1px inset grey; background-color: white'
+        self.lbl_exptime_name = QLabel('Elapsed time')
+        self.lbl_exptime_name.setFont(self.Bold)
+        self.lbl_exptime_progress = QLabel('0')
+        self.lbl_exptime_progress.setStyleSheet(label_style)
+        self.exposure_bar_lbl = QLabel('Exposure progress')        
+        self.exposure_bar = QProgressBar()
+        self.readout_bar_lbl = QLabel('Readout progress')
+        self.readout_bar = QProgressBar()
+        status_layout = QVBoxLayout()
+        status_layout.addWidget(self.lbl_exptime_name)
+        status_layout.addWidget(self.lbl_exptime_progress)
+        status_layout.addWidget(self.exposure_bar_lbl)
+        status_layout.addWidget(self.exposure_bar)
+        status_layout.addWidget(self.readout_bar_lbl)
+        status_layout.addWidget(self.readout_bar)
+
+        self.lbl_progname = QLabel('Program ID')
+        self.lbl_progname.setFont(self.Bold)
+        self.lbl_progname_result = QLabel('')
+        self.lbl_progname_result.setStyleSheet(label_style)
+        self.lbl_statenam = QLabel('Instrument State Name')
+        self.lbl_statenam.setFont(self.Bold)
+        self.lbl_statenam_result = QLabel('')
+        self.lbl_statenam_result.setStyleSheet(label_style)
+        status_layout.addWidget(self.lbl_progname)
+        status_layout.addWidget(self.lbl_progname_result)
+        status_layout.addWidget(self.lbl_statenam)
+        status_layout.addWidget(self.lbl_statenam_result)
+
+        status_layout.addStretch()
 
 
         # output
         self.output = QTextEdit()
         self.test_mode = QCheckBox('Test mode (show command, no action)')
         self.test_mode.clicked.connect(self.setRunMode)
+        # abort
         self.abort_script = QPushButton('Abort script')
         self.abort_script.setStyleSheet("background-color : %s" % self.abortColor)
-
-        # exposure vertical layout
-        v_layout = QVBoxLayout(self)
-        v_layout.addLayout(h1_layout)
-        v_layout.addLayout(h2_layout)
-        v_layout.addWidget(self.update_exptime)
-        v_layout.addLayout(h3_layout)
-        v_layout.addWidget(self.objectUpdate)
-        v_layout.addLayout(h4_layout)
-        v_layout.addWidget(self.skypaUpdate)
-        v_layout.addWidget(self.separator1)
-        v_layout.addWidget(self.science)
-        v_layout.addWidget(self.twiflat)
-        v_layout.addWidget(self.bias)
-        v_layout.addWidget(self.dark)
-        v_layout.addWidget(self.fpc)
-        v_layout.addWidget(self.separator2)
-        v_layout.addWidget(self.abort_script)
-        v_layout.addWidget(self.output)
-        v_layout.addWidget(self.test_mode)
+        #self.abort_script.setFixedWidth(self.buttonSize)
 
 
-        ### STATUS
+        # combine buttons and status in a horizontal layout
+        buttons_status = QHBoxLayout()
+        buttons_status.addLayout(buttons)
+        buttons_status.addLayout(status_layout)
 
-        # Exposure progress bar
-        self.exposure_bar_lbl = QLabel('Exposure progress')
-        self.exposure_bar = QProgressBar()
-        self.readout_bar_lbl = QLabel('Readout progress')
-        self.readout_bar = QProgressBar()
-        status_layout = QVBoxLayout(self)
-        status_layout.addWidget(self.exposure_bar_lbl)
-        status_layout.addWidget(self.exposure_bar)
-        status_layout.addWidget(self.readout_bar_lbl)
-        status_layout.addWidget(self.readout_bar)
+        # create the master Vertical layout
 
+        master_layout = QVBoxLayout()
+        master_layout.addLayout(grid_layout)
+        #master_layout.addLayout(h2_layout)
+        ##master_layout.addLayout(h3_layout)
+        #master_layout.addLayout(h4_layout)
+        master_layout.addWidget(self.separator1)
+        master_layout.addLayout(buttons_status)
+        master_layout.addWidget(self.separator2)
+        master_layout.addWidget(self.abort_script)
+        master_layout.addWidget(self.output)        
+        master_layout.addWidget(self.test_mode)
 
-        # combine the two vertical layouts
-        main_layout = QHBoxLayout(self)
-        main_layout.addLayout(v_layout)
-        main_layout.addLayout(status_layout)
-
-
-        self.setLayout(main_layout)
+        self.setLayout(master_layout)
 
         # create button connection
         buttons = [self.science,self.twiflat,self.bias,self.dark,self.fpc]
@@ -199,11 +261,12 @@ class MyWindow(QWidget):
         self.abort_script.clicked.connect(self.abortScript)
 
         self.update_exptime.clicked.connect(self.change_exptime)
+        #self.update_nexp.clicked.connect(self.change_nexp)
 
     ########## UPDATE keywords
 
     def update_elaptime(self, value):
-        self.elaptime_thread.setText(value)
+        self.lbl_exptime_progress.setText(value)
 
     def update_pixpercent(self, value):
         self.readout_bar.setValue(value)
@@ -211,11 +274,19 @@ class MyWindow(QWidget):
     def update_expprog(self, value):
         self.exposure_bar.setValue(value)
 
+    def update_progname(self, value):
+        self.lbl_progname_result.setText(value)
+
+    def update_statenam(self, value):
+        self.lbl_statenam_result.setText(value)
+
     def start_elaptime_monitor(self):
         self.keyword_thread = keywordMonitor()
         self.keyword_thread.elaptime.connect(self.update_elaptime)
         self.keyword_thread.pixpercent.connect(self.update_pixpercent)
         self.keyword_thread.expprog.connect(self.update_expprog)
+        self.keyword_thread.progname.connect(self.update_progname)
+        self.keyword_thread.statenam.connect(self.update_statenam)
         self.keyword_thread.start()
     
         
@@ -299,7 +370,7 @@ class MyWindow(QWidget):
         print("Process started")
 
     def launchError(self, error):
-        if error != QtCore.QProcess.Crashed:
+        if error != QProcess.Crashed:
             self.showOutput("Warning! There was a problem running the requested function.")
     
     def setRunMode(self):
@@ -319,8 +390,8 @@ class MyWindow(QWidget):
         else:
             cmdline = command
         print("Running: %s\n" % cmdline)
-        self.process = QtCore.QProcess(self)
-        self.process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
+        self.process = QProcess(self)
+        self.process.setProcessChannelMode(QProcess.MergedChannels)
         self.process.readyRead.connect(self.dataReady)
         self.process.finished.connect(self.onFinished)
         self.process.error.connect(self.launchError)
