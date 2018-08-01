@@ -335,7 +335,7 @@ class MyWindow(Exposure_GUI):
         exptime = self.exptime.text()
         nexp = self.nexp.text()
         sender = self.sender()
-        if sender.text() == 'Science exposure':
+        if sender.text() == 'Science \n exposure':
             commands = [['imtype',['OBJECT']], ['tintb',[str(exptime)]], ['goib', [str(nexp)]]]
         elif sender.text() == 'Twilight flat':
             commands = [['tintb', [str(exptime)]],['imtype',['TWIFLAT']], ['goib', [str(nexp)]]]
@@ -348,7 +348,7 @@ class MyWindow(Exposure_GUI):
         #elif sender.text() == 'Save Guider Image':
         #    command = 'saveGuiderImageLocal'
         else:
-            command = None
+            commands = None
 
         if commands is not None:
             for command in commands:
