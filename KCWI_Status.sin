@@ -1,0 +1,82 @@
+#! @KPYTHON3@
+
+import sys,os
+import subprocess
+from PyQt5.QtWidgets import QFrame, QLabel,QHBoxLayout,QLineEdit,QPushButton,QVBoxLayout,QApplication,QCheckBox, QTextEdit, QWidget, QProgressBar, QGridLayout
+from PyQt5.QtCore import QThread, pyqtSignal, QProcess
+from QLed import QLed
+try:
+    import ktl
+    useKTL = True
+except:
+    print("KTL functions are not available")
+    useKTL = False
+from KCWI_Exposure_Design import Exposure_GUI
+
+def main():
+    app = QApplication(sys.argv)
+    w = MyWindow()
+    w.show()
+    sys.exit(app.exec_())
+
+
+class keywordMonitor(QThread):
+    exchanger_status = pyqtSignal('QString')
+
+    def __init__(self):
+        QThread.__init__(self)
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        if useKTL is False:
+            return
+
+        def exchanger_status_callback(keyword):
+            value = "%.1f" % keyword['binary']
+            self.exchanger_status.emit(str(value))
+
+        exchanger_status = ktl.cache('kbes', 'status')
+        exchanger_status.callback(exchanger_status_callback)
+
+        monitored_keywords = [exchanger_status]
+        for keyword in monitored_keywords:
+            keyword.monitor()
+
+        while True:
+            self.sleep(1)
+
+
+class MyWindow(Exposure_GUI):
+    def __init__(self, *args):
+        super().__init__()
+        self.init_ui()
+        self.setWindowTitle("KCWI Status")
+        self.start_keyword_monitor()
+
+    def init_ui(self):
+        self.lbl1 = QLabel('Blue Exchanger')
+        self.exchanger_led = QLed(onColour=QLed.Green, shape=QLed.Circle)
+        self.layout1 = QHBoxLayout()
+        self.layout1.addWidget(self.lbl1)
+        self.layout1.addWidget(self.exchanger_led)
+
+        self.setLayout(self.layout1)
+
+    ########## UPDATE keywords
+
+    def update_exchanger_status(self, value):
+        if value == "OK":
+            self.exchanger_led.value = True
+        else:
+            self.exchanger_led.value = False
+
+    def start_keyword_monitor(self):
+        self.keyword_thread = keywordMonitor()
+        self.keyword_thread.exchanger_status.connect(self.update_exchanger_status)
+        self.keyword_thread.start()
+
+
+if __name__ == "__main__":
+    main()
