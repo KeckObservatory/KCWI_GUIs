@@ -11,7 +11,7 @@ try:
 except:
     print("KTL functions are not available")
     useKTL = False
-from KCWI_Exposure_Design import Exposure_GUI
+
 
 def main():
     app = QApplication(sys.argv)
@@ -34,7 +34,8 @@ class keywordMonitor(QThread):
             return
 
         def exchanger_status_callback(keyword):
-            value = "%.1f" % keyword['binary']
+            #value = "%.1f" % keyword['binary']
+            value = keyword['binary']
             self.exchanger_status.emit(str(value))
 
         exchanger_status = ktl.cache('kbes', 'status')
@@ -48,7 +49,7 @@ class keywordMonitor(QThread):
             self.sleep(1)
 
 
-class MyWindow(Exposure_GUI):
+class MyWindow(QWidget):
     def __init__(self, *args):
         super().__init__()
         self.init_ui()
