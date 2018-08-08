@@ -32,6 +32,7 @@ class keywordMonitor(QThread):
     calunit_status = pyqtSignal('QString')
     camfocus_status = pyqtSignal('QString')
     grrot_status = pyqtSignal('QString')
+    artfilling = pyqtSignal('QString')
 
     def __init__(self):
         QThread.__init__(self)
@@ -54,6 +55,9 @@ class keywordMonitor(QThread):
                 signal = self.camfocus_status
             if keyword == grrot_homed:
                 signal = self.grrot_status
+            if keyword == artfilling:
+                signal = self.artfilling
+
             value = keyword['binary']
             signal.emit(str(value))
 
@@ -62,8 +66,9 @@ class keywordMonitor(QThread):
         calunit_status = ktl.cache('kcas', 'status')
         camfocus_homed = ktl.cache('kbms', 'fochomed')
         grrot_homed = ktl.cache('kbes', 'grhomed')
+        artfilling = ktl.cache('kbms', 'artfilling')
 
-        monitored_keywords = [exchanger_status, mechanisms_status, calunit_status, camfocus_homed, grrot_homed]
+        monitored_keywords = [exchanger_status, mechanisms_status, calunit_status, camfocus_homed, grrot_homed, artfilling]
         for keyword in monitored_keywords:
             keyword.callback(status_callback)
             keyword.monitor()
@@ -98,11 +103,15 @@ class MyWindow(QWidget):
         self.lbl5 = QLabel('Grating Rotator')
         self.grrot_led_ok = QLed(onColour=QLed.Green, shape=QLed.Circle, offColour=QLed.Red)
         self.grrot_led_status = QLabel()
+        self.lbl6 = QLabel('Cryo fill status')
+        self.artfilling_led_ok = QLed(onColour=QLed.Green, shape=QLed.Circle, offCoulour=QLed.Red)
+        self.artfilling_led_status = QLabel()
 
         self.vline1 = separator()
         self.vline2 = separator()
         self.vline3 = separator()
         self.vline4 = separator()
+        self.vline5 = separator()
 
         self.layout.addWidget(self.lbl1, 0, 0)
         self.layout.addWidget(self.vline1, 0, 1, 3, 1)
@@ -113,6 +122,7 @@ class MyWindow(QWidget):
         self.layout.addWidget(self.lbl4, 0, 6)
         self.layout.addWidget(self.vline4, 0, 7, 3, 1)
         self.layout.addWidget(self.lbl5, 0, 8)
+        self.layout.addWidget(self.vline5, 0, 9, 3, 1)
 
         self.layout.addWidget(self.exchanger_led_ok, 1, 0)
         self.layout.addWidget(self.exchanger_led_status, 2, 0)
@@ -128,6 +138,9 @@ class MyWindow(QWidget):
 
         self.layout.addWidget(self.grrot_led_ok, 1, 8)
         self.layout.addWidget(self.grrot_led_status, 2, 8)
+
+        self.layout.addWidget(self.artfilling_led_ok, 1, 10)
+        self.layout.addWidget(self.artfilling_led_status, 2, 10)
 
         self.setLayout(self.layout)
 
@@ -170,6 +183,13 @@ class MyWindow(QWidget):
             self.grrot_led_ok.value = False
             self.grrot_led_status.setText("NOT Homed")
 
+    def update_artfilling_status(self, value):
+        if value == "0":
+            self.artfilling_led_ok.value = True
+            self.artfilling_led_status.setText("NOT Filling (OK)")
+        else:
+            self.artfilling_led_ok.value = False
+            self.artfilling_led_status.setText("KCWI in fill position")
 
     def start_keyword_monitor(self):
         self.keyword_thread = keywordMonitor()
