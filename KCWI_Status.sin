@@ -32,7 +32,7 @@ class keywordMonitor(QThread):
     calunit_status = pyqtSignal('QString')
     camfocus_status = pyqtSignal('QString')
     grrot_status = pyqtSignal('QString')
-    artfilling = pyqtSignal('QString')
+    artfilling_status = pyqtSignal('QString')
 
     def __init__(self):
         QThread.__init__(self)
@@ -56,7 +56,7 @@ class keywordMonitor(QThread):
             if keyword == grrot_homed:
                 signal = self.grrot_status
             if keyword == artfilling:
-                signal = self.artfilling
+                signal = self.artfilling_status
 
             value = keyword['binary']
             signal.emit(str(value))
@@ -123,6 +123,7 @@ class MyWindow(QWidget):
         self.layout.addWidget(self.vline4, 0, 7, 3, 1)
         self.layout.addWidget(self.lbl5, 0, 8)
         self.layout.addWidget(self.vline5, 0, 9, 3, 1)
+        self.layout.addWidget(self.lbl6, 0, 10)
 
         self.layout.addWidget(self.exchanger_led_ok, 1, 0)
         self.layout.addWidget(self.exchanger_led_status, 2, 0)
@@ -198,6 +199,7 @@ class MyWindow(QWidget):
         self.keyword_thread.calunit_status.connect(self.update_calunit_status)
         self.keyword_thread.camfocus_status.connect(self.update_camfocus_status)
         self.keyword_thread.grrot_status.connect(self.update_grrot_status)
+        self.keyword_thread.artfilling_status.connect(self.update_artfilling_status)
         self.keyword_thread.start()
 
 
