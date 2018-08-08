@@ -238,7 +238,7 @@ class MyWindow(Exposure_GUI):
         except:
             kroot = ""
         if skypa:
-            if isinstance(skypa, float):
+            if isinstance(skypa, float) or isinstance(skypa, int):
                 cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'skypa %f' % float(skypa))
                 if self.runMode is not 'debug':
                     p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
