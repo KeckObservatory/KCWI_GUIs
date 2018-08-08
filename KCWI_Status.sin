@@ -104,7 +104,7 @@ class MyWindow(QWidget):
         self.grrot_led_ok = QLed(onColour=QLed.Green, shape=QLed.Circle, offColour=QLed.Red)
         self.grrot_led_status = QLabel()
         self.lbl6 = QLabel('Cryo fill status')
-        self.artfilling_led_ok = QLed(onColour=QLed.Green, shape=QLed.Circle, offCoulour=QLed.Red)
+        self.artfilling_led_ok = QLed(onColour=QLed.Green, shape=QLed.Circle, offColour=QLed.Red)
         self.artfilling_led_status = QLabel()
 
         self.vline1 = separator()
