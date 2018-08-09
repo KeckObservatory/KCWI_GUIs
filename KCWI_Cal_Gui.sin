@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout,QTableWidget, QTableWidgetItem,
 from PyQt5.QtWidgets import QPushButton, QCheckBox, QLineEdit, QLabel, QApplication, QTextEdit
 from pymongo import MongoClient
 from PyQt5 import QtCore
+from PyQt5 import QtGui
 #from ConfigManager import save_state, state_file_name
 #from QtCore import QStringList
 
@@ -304,9 +305,9 @@ class App(QWidget):
         self.processOutput = str(self.process.readAll(), 'utf-8')
         cursor.insertText("%s\n" % self.processOutput)
         #cursor.insertText(str(self.process.readAll(), 'utf-8'))
-        cursor.movePosition(QTextCursor.End)
-        cursor.movePosition(QTextCursor.Up if cursor.atBlockStart() else
-                            QTextCursor.StartOfLine)
+        cursor.movePosition(QtGui.QTextCursor.End)
+        cursor.movePosition(QtGui.QTextCursor.Up if cursor.atBlockStart() else
+                            QtGui.QTextCursor.StartOfLine)
         #self.setTextCursor(cursor)
         #self.output.ensureCursorVisible()
         print(self.processOutput)
