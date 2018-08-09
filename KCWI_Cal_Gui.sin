@@ -240,6 +240,8 @@ class App(QWidget):
             qhboxlayout.addWidget(checkbox)
             qhboxlayout.setContentsMargins(0, 0, 0, 0)
             self.tableWidget.setCellWidget(currentRow, 0, qwidget)
+            if 'pwaveb' not in configuration.keys():
+                configuration['pwaveb'] = configuration['cwaveb']
             self.tableWidget.setItem(currentRow, 1, QTableWidgetItem(configuration['statenam']))
             self.tableWidget.setItem(currentRow, 2, QTableWidgetItem(configuration['image_slicer']))
             self.tableWidget.setItem(currentRow, 3, QTableWidgetItem(configuration['filterb']))
@@ -305,11 +307,12 @@ class App(QWidget):
         self.processOutput = str(self.process.readAll(), 'utf-8')
         cursor.insertText("%s\n" % self.processOutput)
         #cursor.insertText(str(self.process.readAll(), 'utf-8'))
-        cursor.movePosition(QtGui.QTextCursor.End)
+        #self.output.cursor.movePosition(QtGui.QTextCursor.End)
         cursor.movePosition(QtGui.QTextCursor.Up if cursor.atBlockStart() else
                             QtGui.QTextCursor.StartOfLine)
         #self.setTextCursor(cursor)
-        #self.output.ensureCursorVisible()
+        self.output.ensureCursorVisible()
+        self.output.moveCursor(QtGui.QTextCursor.End)
         print(self.processOutput)
 
 
