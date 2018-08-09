@@ -304,7 +304,11 @@ class App(QWidget):
         self.processOutput = str(self.process.readAll(), 'utf-8')
         cursor.insertText("%s\n" % self.processOutput)
         #cursor.insertText(str(self.process.readAll(), 'utf-8'))
-        self.output.ensureCursorVisible()
+        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(QTextCursor.Up if cursor.atBlockStart() else
+                            QTextCursor.StartOfLine)
+        #self.setTextCursor(cursor)
+        #self.output.ensureCursorVisible()
         print(self.processOutput)
 
 
