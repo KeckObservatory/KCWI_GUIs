@@ -232,13 +232,21 @@ class MyWindow(Exposure_GUI):
                 self.output.setText(str(cmdline))
 
     def change_skypa(self):
+        def is_float(input):
+            try:
+                num = float(input)
+            except ValueError:
+                return False
+            return True
+
         skypa = self.skypa.text()
         try:
             kroot = os.environ['KROOT']
         except:
             kroot = ""
+
         if skypa:
-            if skypa.isdigit():
+            if is_float(skypa):
                 cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'skypa %f' % float(skypa))
                 if self.runMode is not 'debug':
                     p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
