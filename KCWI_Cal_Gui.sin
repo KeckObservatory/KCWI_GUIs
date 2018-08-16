@@ -93,6 +93,7 @@ class KCWIConfig():
             except:
                 pass
         id = str(self.configuration['_id']).replace(" ", "-")
+        id = id.replace("/","-")
         stateFile.write( "%s = %s\n" % ("stateid",str(id)))
         stateFile.close()
         return output
