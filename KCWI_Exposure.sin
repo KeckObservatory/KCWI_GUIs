@@ -204,7 +204,7 @@ class MyWindow(Exposure_GUI):
         except:
             kroot = ""
         if exptime:
-            cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'tintb %d' % float(exptime))
+            cmdline = os.path.join(kroot, 'rel', 'default', 'bin', 'tintb %f' % float(exptime))
             if self.runMode is not 'debug':
                 p = subprocess.Popen(cmdline, stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
                 output, errors = p.communicate()
