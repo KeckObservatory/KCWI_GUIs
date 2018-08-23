@@ -165,6 +165,21 @@ class Exposure_GUI(QWidget):
         self.lbl_statenam_result = QLabel('')
         self.lbl_statenam_result.setStyleSheet(label_style)
 
+        self.lbl_slicer = QLabel('Slicer')
+        self.lbl_slicer.setFont(self.Bold)
+        self.lbl_slicer_result = QLabel('')
+        self.lbl_slicer_result.setStyleSheet(label_style)
+
+        self.lbl_grating = QLabel('Grating')
+        self.lbl_grating.setFont(self.Bold)
+        self.lbl_grating_result = QLabel('')
+        self.lbl_grating_result.setStyleSheet(label_style)
+
+        self.lbl_filter = QLabel('Filter')
+        self.lbl_filter.setFont(self.Bold)
+        self.lbl_filter_result = QLabel('')
+        self.lbl_filter_result.setStyleSheet(label_style)
+
         status_layout1 = QVBoxLayout()
         status_layout1.addWidget(self.exposure_bar_lbl)
         status_layout1.addWidget(self.exposure_bar)
@@ -193,6 +208,13 @@ class Exposure_GUI(QWidget):
         status_layout2.addWidget(self.lbl_progname_result,5,0)
         status_layout2.addWidget(self.lbl_statenam,4,1, 1,2)
         status_layout2.addWidget(self.lbl_statenam_result,5,1, 1,2)
+        # fourth row
+        status_layout2.addWidget(self.lbl_slicer, 6, 0)
+        status_layout2.addWidget(self.lbl_slicer_result, 7, 0)
+        status_layout2.addWidget(self.lbl_grating, 6, 1)
+        status_layout2.addWidget(self.lbl_grating_result, 7, 1)
+        status_layout2.addWidget(self.lbl_filter, 6, 2)
+        status_layout2.addWidget(self.lbl_filter_result, 7, 2)
 
         #status_layout.addStretch()
         status_layout = QVBoxLayout()

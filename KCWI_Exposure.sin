@@ -31,6 +31,9 @@ class keywordMonitor(QThread):
     binning = pyqtSignal('QString')
     ampmode = pyqtSignal(int)
     ccdmode = pyqtSignal(int)
+    filter = pyqtSignal('QString')
+    grating = pyqtSignal('QString')
+    slicer = pyqtSignal('QString')
 
     def __init__(self):
         QThread.__init__(self)
@@ -81,6 +84,22 @@ class keywordMonitor(QThread):
             value = keyword['binary']
             self.ccdmode.emit(int(value))
 
+        def slicer_callback(keyword):
+            value = keyword['binary']
+            self.slicer.emit(str(value))
+
+        def filter_callback(keyword):
+            value = keyword['binary']
+            self.filter.emit(str(value))
+
+        def grating_callback(keyword):
+            grating = gname['binary']
+            cwave = bcwave['binary']
+            pwave = bpwave['binary']
+            result = '%s at %s/%s' % (grating, cwave, pwave)
+            self.grating.emit(str(result))
+
+
 
         elaptime = ktl.cache('kbds', 'elaptime')
         elaptime.callback(elaptime_callback)
@@ -102,9 +121,21 @@ class keywordMonitor(QThread):
         ampmode.callback(ampmode_callback)
         ccdmode = ktl.cache('kbds', 'ccdmode')
         ccdmode.callback(ccdmode_callback)
+        gname = ktl.cache('kbes', 'gname')
+        bcwave = ktl.cache('kcwi', 'bcwave')
+        bpwave = ktl.cache('kcwi', 'bpwave')
+        gname.callback(grating_callback)
+        bcwave.callback(grating_callback)
+        bpwave.callback(grating_callback)
+        slicer = ktl.cache('kcas', 'ifuname')
+        slicer.callback(slicer_callback)
+        filter = ktl.cache('kbes', 'fname')
+        filter.callback(filter_callback)
+
         
         monitored_keywords = [elaptime, pixpercent, expprog, progname, statenam,
-                              imtype, frameno, binning, ampmode, ccdmode]
+                              imtype, frameno, binning, ampmode, ccdmode,
+                              gname, bcwave, bpwave, slicer, filter]
         for keyword in monitored_keywords:
             keyword.monitor()
 
@@ -178,6 +209,15 @@ class MyWindow(Exposure_GUI):
             speed = 'Fast'
         self.lbl_ccdmode_result.setText(speed)
 
+    def update_filter(self, value):
+        self.lbl_filter_result.setText(value)
+
+    def update_slicer(self, value):
+        self.lbl_slicer_result.setText(value)
+
+    def update_grating(self, value):
+        self.lbl_grating_result.setText(value)
+
 
     def start_elaptime_monitor(self):
         self.keyword_thread = keywordMonitor()
@@ -191,6 +231,9 @@ class MyWindow(Exposure_GUI):
         self.keyword_thread.binning.connect(self.update_binning)
         self.keyword_thread.ampmode.connect(self.update_ampmode)
         self.keyword_thread.ccdmode.connect(self.update_ccdmode)
+        self.keyword_thread.filter.connect(self.update_filter)
+        self.keyword_thread.grating.connect(self.update_grating)
+        self.keyword_thread.slicer.connect(self.update_slicer)
         self.keyword_thread.start()
     
         
