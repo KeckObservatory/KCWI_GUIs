@@ -4,7 +4,7 @@ override VERNUM = 1.0
 
 SUBST_STRICT = True
 
-RELBIN = KCWI_Exposure KCWI_Offset KCWI_Cal_Gui
+RELBIN = KCWI_Exposure KCWI_Offset KCWI_Cal_Gui KCWI_Exposure_Design.py KCWI_Status QLed.py
 FILES = $(RELBIN)
 
 

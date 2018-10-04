@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout,QTableWidget, QTableWidgetItem,
 from PyQt5.QtWidgets import QPushButton, QCheckBox, QLineEdit, QLabel, QApplication, QTextEdit
 from pymongo import MongoClient
 from PyQt5 import QtCore
+from PyQt5 import QtGui
 #from ConfigManager import save_state, state_file_name
 #from QtCore import QStringList
 
@@ -37,11 +38,16 @@ class KCWIConfig():
 
 
     def retrieveConfiguration(self):
-        client = MongoClient(self.server)
-        db = client.KCWI
-        print("Retrieving configuration %s of program %s" % (self.configurationName, self.programId))
-        self.configuration = db.Configurations.find_one({'statenam': self.configurationName,'progname': self.programId})
-        client.close()
+        try:
+            client = MongoClient(self.server)
+            db = client.KCWI
+            print("Retrieving configuration %s of program %s" % (self.configurationName, self.programId))
+            self.configuration = db.Configurations.find_one({'statenam': self.configurationName,'progname': self.programId})
+            client.close()
+        except:
+            print("Error connecting to the configuration database")
+            return
+
         self.configurationDetails = {}
         print(self.configuration)
         for key in self.elements.keys():
@@ -87,6 +93,7 @@ class KCWIConfig():
             except:
                 pass
         id = str(self.configuration['_id']).replace(" ", "-")
+        id = id.replace("/","-")
         stateFile.write( "%s = %s\n" % ("stateid",str(id)))
         stateFile.close()
         return output
@@ -116,8 +123,12 @@ class App(QWidget):
         #self.runMode = 'debug'
         self.runMode = ''
         self.caltype = 'all'
+        self.normal_color = 'LawnGreen'
+        self.quit_color = 'Red'
+        self.optional_color = 'Gold'
         self.init_ui()
         self.processOutput='Click on the right or define'
+        self.runOutdir()
 
 
     def init_ui(self):
@@ -132,7 +143,7 @@ class App(QWidget):
         self.outdir.editingFinished.connect(self.setWorkingDirectory)
         # use outdir for output directory
         self.useOutdir = QCheckBox('Use KCWI outdir')
-        self.useOutdir.setCheckState(QtCore.Qt.Unchecked)
+        self.useOutdir.setCheckState(QtCore.Qt.Checked)
         self.useOutdir.clicked.connect(self.runOutdir)
         # use current directory
         self.usePwd = QCheckBox('Use current directory')
@@ -154,10 +165,15 @@ class App(QWidget):
         buttonSize = 250
 
         self.reload = QPushButton('Reload configurations')
+        self.reload.setStyleSheet("background-color : %s" % self.optional_color)
         self.list = QPushButton('List checked configurations')
+        self.list.setStyleSheet("background-color : %s" % self.optional_color)
         self.save = QPushButton('1 - Save states to disk')
+        self.save.setStyleSheet("background-color : %s" % self.normal_color)
         self.genfiles = QPushButton('2 - Generate calibration scripts')
+        self.genfiles.setStyleSheet("background-color : %s" % self.normal_color)
         self.gencals = QPushButton('3 - Generate calibration flat files')
+        self.gencals.setStyleSheet("background-color : %s" % self.normal_color)
 
         # radio buttons for calibrations
         self.hlayout3 = QHBoxLayout()
@@ -179,8 +195,12 @@ class App(QWidget):
         self.hlayout3.addWidget(self.radiobutton)
 
         self.runcals = QPushButton('4 - Run cals')
+        self.runcals.setStyleSheet("background-color : %s" % self.normal_color)
+        self.alldone = QPushButton('Quit')
+        self.alldone.setStyleSheet("background-color : %s" % self.quit_color)
 
-        buttons = [self.reload,self.list,self.save, self.gencals, self.genfiles, self.runcals]
+
+        buttons = [self.reload,self.list,self.save, self.gencals, self.genfiles, self.runcals, self.alldone]
         for button in buttons:
                 button.setFixedWidth(buttonSize)
         self.program.textChanged.connect(self.set_program)
@@ -191,6 +211,7 @@ class App(QWidget):
         #self.genfiles.clicked.connect(self.showcurrent)
         self.gencals.clicked.connect(self.run_generate_cal_files)
         self.runcals.clicked.connect(self.run_calibrations)
+        self.alldone.clicked.connect(self.quit)
 
         self.layout = QVBoxLayout()
         self.layout.addLayout(self.hlayout1)
@@ -204,6 +225,7 @@ class App(QWidget):
         self.vlayout1.addWidget(self.gencals)
         self.vlayout1.addLayout(self.hlayout3)
         self.vlayout1.addWidget(self.runcals)
+        self.vlayout1.addWidget(self.alldone)
 
         self.hlayout2 = QHBoxLayout()
         self.hlayout2.addLayout(self.vlayout1)
@@ -214,16 +236,22 @@ class App(QWidget):
         self.setLayout(self.layout)
         self.show()
 
+    def quit(self):
+        self.close()
+
     def set_program(self):
         self.programId = self.program.text()
         self.refresh_data()
 
     def load_data(self):
-        client = MongoClient('observinglogs')
-        db = client.KCWI
-        print(self.programId)
-        if self.programId == "":
-            return
+        try:
+            client = MongoClient('observinglogs')
+            db = client.KCWI
+            print(self.programId)
+            if self.programId == "":
+                return
+        except:
+            self.showOutput("Warning: there is a problem connecting to the configuration database")
         configurations = list(
             db.Configurations.find({'progname': self.programId}, {'statenam': 1, 'image_slicer': 1, 'filterb': 1, 'gratingb': 1,
                                                           'cwaveb': 1, 'pwaveb': 1, 'binningb': 1}))
@@ -235,25 +263,29 @@ class App(QWidget):
             qwidget = QWidget()
             checkbox = QCheckBox()
             checkbox.setCheckState(QtCore.Qt.Unchecked)
+            checkbox.setStyleSheet('background-color: Gold')
             qhboxlayout = QHBoxLayout(qwidget)
             qhboxlayout.addWidget(checkbox)
             qhboxlayout.setContentsMargins(0, 0, 0, 0)
+            qhboxlayout.setAlignment(QtCore.Qt.AlignCenter)
+
+
             self.tableWidget.setCellWidget(currentRow, 0, qwidget)
-            rows = [1,2,3,4,5,6,7]
-            columns = ['statenam','image_slicer','filterb','gratingb','cwaveb','pwaveb','binningb']
-            for index in range(len(rows)):
-                try:
-                    self.tableWidget.setItem(currentRow,rows[index], QTableWidgetItem(configuration[columns[index]]))
-                except:
-                    self.tableWidget.setItem(currentRow,rows[index], QTableWidgetItem("!!!MISSING!!!"))
-            #self.tableWidget.setItem(currentRow, 1, QTableWidgetItem(configuration['statenam']))
-            #self.tableWidget.setItem(currentRow, 2, QTableWidgetItem(configuration['image_slicer']))
-            #self.tableWidget.setItem(currentRow, 3, QTableWidgetItem(configuration['filterb']))
-            #self.tableWidget.setItem(currentRow, 4, QTableWidgetItem(configuration['gratingb']))
-            #self.tableWidget.setItem(currentRow, 5, QTableWidgetItem(configuration['cwaveb']))
-            #self.tableWidget.setItem(currentRow, 6, QTableWidgetItem(configuration['pwaveb']))
-            #self.tableWidget.setItem(currentRow, 7, QTableWidgetItem(configuration['binningb']))
-            currentRow += 1
+
+            try:
+                if 'pwaveb' not in configuration.keys():
+                    configuration['pwaveb'] = configuration['cwaveb']
+                self.tableWidget.setItem(currentRow, 1, QTableWidgetItem(configuration['statenam']))
+                self.tableWidget.setItem(currentRow, 2, QTableWidgetItem(configuration['image_slicer']))
+                self.tableWidget.setItem(currentRow, 3, QTableWidgetItem(configuration['filterb']))
+                self.tableWidget.setItem(currentRow, 4, QTableWidgetItem(configuration['gratingb']))
+                self.tableWidget.setItem(currentRow, 5, QTableWidgetItem(configuration['cwaveb']))
+                self.tableWidget.setItem(currentRow, 6, QTableWidgetItem(configuration['pwaveb']))
+                self.tableWidget.setItem(currentRow, 7, QTableWidgetItem(configuration['binningb']))
+                currentRow += 1
+            except:
+                self.showOutput('\n *** Problems loading configuration >> %s << ' % configuration['statenam'])
+        self.color_table()
 
 
     def refresh_data(self):
@@ -270,7 +302,21 @@ class App(QWidget):
         self.tableWidget.setHorizontalHeaderLabels(col_headers)
         self._list=[]
         self.load_data()
-        self.show()
+        print("Load data finished")
+        print(self.tableWidget.rowCount())
+
+    def color_table(self):
+
+        for row in range(self.tableWidget.rowCount()):
+            print("setting color of row %d" % row)
+            if row % 2 == 0:
+                color = QtGui.QColor(100,149,237)
+            else:
+                color = QtGui.QColor(135,206,250)
+            for j in range(self.tableWidget.columnCount()):
+                if self.tableWidget.item(row, j) is not None:
+                    self.tableWidget.item(row, j).setBackground(color)
+        #self.show()
 
     def ListConfigs(self):
         checked_list = []
@@ -310,8 +356,10 @@ class App(QWidget):
         cursor.movePosition(cursor.End)
         self.processOutput = str(self.process.readAll(), 'utf-8')
         cursor.insertText("%s\n" % self.processOutput)
-        #cursor.insertText(str(self.process.readAll(), 'utf-8'))
+        cursor.movePosition(QtGui.QTextCursor.Up if cursor.atBlockStart() else
+                            QtGui.QTextCursor.StartOfLine)
         self.output.ensureCursorVisible()
+        self.output.moveCursor(QtGui.QTextCursor.End)
         print(self.processOutput)
 
 
