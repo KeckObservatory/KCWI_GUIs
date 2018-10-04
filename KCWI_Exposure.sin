@@ -96,7 +96,7 @@ class keywordMonitor(QThread):
             grating = gname['binary']
             cwave = bcwave['binary']
             pwave = bpwave['binary']
-            result = '%s at %s/%s' % (grating, cwave, pwave)
+            result = '%s at %.1f/%.1f' % (grating, float(cwave), float(pwave))
             self.grating.emit(str(result))
 
 
