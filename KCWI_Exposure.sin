@@ -102,7 +102,7 @@ class keywordMonitor(QThread):
 
         def dcsobject_callback(keyword):
             object = dcsobject['binary']
-            self.object.emit(str(object))
+            self.dcsobject.emit(str(object))
 
 
 
