@@ -34,6 +34,7 @@ class keywordMonitor(QThread):
     filter = pyqtSignal('QString')
     grating = pyqtSignal('QString')
     slicer = pyqtSignal('QString')
+    dcsobject = pyqtSignal('QString')
 
     def __init__(self):
         QThread.__init__(self)
@@ -99,6 +100,10 @@ class keywordMonitor(QThread):
             result = '%s at %.1f/%.1f' % (grating, float(cwave), float(pwave))
             self.grating.emit(str(result))
 
+        def dcsobject_callback(keyword):
+            object = dcs['TARGNAME']
+            self.object.emit(str(object))
+
 
 
         elaptime = ktl.cache('kbds', 'elaptime')
@@ -131,11 +136,13 @@ class keywordMonitor(QThread):
         slicer.callback(slicer_callback)
         filter = ktl.cache('kbes', 'fname')
         filter.callback(filter_callback)
+        dcsobject = ktl.cache('dcs','targname')
+        dcsobject.callback(dcsobject_callback)
 
         
         monitored_keywords = [elaptime, pixpercent, expprog, progname, statenam,
                               imtype, frameno, binning, ampmode, ccdmode,
-                              gname, bcwave, bpwave, slicer, filter]
+                              gname, bcwave, bpwave, slicer, filter, dcsobject]
         for keyword in monitored_keywords:
             keyword.monitor()
 
@@ -219,7 +226,13 @@ class MyWindow(Exposure_GUI):
         self.lbl_grating_result.setText(value)
 
 
-    def start_elaptime_monitor(self):
+    def update_object(self, value):
+        if self.auto_object_mode is True:
+            self.showOutput("Automatic object mode is on. Setting object to %s" % str(value))
+            self.object.setText(value)
+            self.change_object()
+
+    def start_keyword_monitor(self):
         self.keyword_thread = keywordMonitor()
         self.keyword_thread.elaptime.connect(self.update_elaptime)
         self.keyword_thread.pixpercent.connect(self.update_pixpercent)
@@ -234,6 +247,7 @@ class MyWindow(Exposure_GUI):
         self.keyword_thread.filter.connect(self.update_filter)
         self.keyword_thread.grating.connect(self.update_grating)
         self.keyword_thread.slicer.connect(self.update_slicer)
+        self.keyword_thread.dcsobject.connect(self.update_object)
         self.keyword_thread.start()
     
         
@@ -336,6 +350,14 @@ class MyWindow(Exposure_GUI):
             self.runMode = 'debug'
         else:
             self.runMode = 'normal'
+
+    def setAutoObject(self):
+        if self.auto_object.isChecked():
+            self.showOutput('Automatic object mode set to ON\n')
+            self.auto_object_mode = True
+        else:
+            self.showOutput('Automatic object mode set to OFF\n')
+            self.auto_object_mode = False
 
 
     def run_command(self,command, command_arguments=[], use_kroot=False, csh=False):

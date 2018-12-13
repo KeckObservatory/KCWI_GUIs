@@ -31,7 +31,7 @@ class Exposure_GUI(QWidget):
         self.Bold.setBold(True)
         self.init_ui()
         self.setWindowTitle("KCWI Exposure Control")
-        self.start_elaptime_monitor()
+        self.start_keyword_monitor()
 
     def init_ui(self):
         # create objects
@@ -225,6 +225,9 @@ class Exposure_GUI(QWidget):
         self.output = QTextEdit()
         self.test_mode = QCheckBox('Test mode (show command, no action)')
         self.test_mode.clicked.connect(self.setRunMode)
+        # automatically set object
+        self.auto_object = QCheckBox('Automatically set object from Telescope Pointing Information')
+        self.auto_object.clicked.connect(self.setAutoObject)
 
 
         # combine buttons and status in a horizontal layout
@@ -242,6 +245,7 @@ class Exposure_GUI(QWidget):
         #master_layout.addWidget(self.abort_script)
         master_layout.addWidget(self.output)        
         master_layout.addWidget(self.test_mode)
+        master_layout.addWidget(self.auto_object)
 
         self.setLayout(master_layout)
 
