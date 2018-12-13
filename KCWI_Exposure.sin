@@ -101,7 +101,7 @@ class keywordMonitor(QThread):
             self.grating.emit(str(result))
 
         def dcsobject_callback(keyword):
-            object = dcsobject['TARGNAME']
+            object = dcsobject['binary']
             self.object.emit(str(object))
 
 
