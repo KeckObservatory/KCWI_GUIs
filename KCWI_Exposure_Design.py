@@ -19,6 +19,7 @@ class Exposure_GUI(QWidget):
     def __init__(self, *args):
         super().__init__()
         self.runMode = ''
+        self.auto_object_mode = ''
         self.applyColor = 'LawnGreen'
         self.scienceColor = 'LawnGreen'
         self.twilightColor = 'Gold'
