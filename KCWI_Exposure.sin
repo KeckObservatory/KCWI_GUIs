@@ -136,7 +136,7 @@ class keywordMonitor(QThread):
         slicer.callback(slicer_callback)
         filter = ktl.cache('kbes', 'fname')
         filter.callback(filter_callback)
-        dcsobject = ktl.cache('dcs','targname')
+        dcsobject = ktl.cache('dcs','targwave')
         dcsobject.callback(dcsobject_callback)
 
         
