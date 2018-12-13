@@ -136,7 +136,7 @@ class keywordMonitor(QThread):
         slicer.callback(slicer_callback)
         filter = ktl.cache('kbes', 'fname')
         filter.callback(filter_callback)
-        dcsobject = ktl.cache('dcs','targwave')
+        dcsobject = ktl.cache('dcs','targname')
         dcsobject.callback(dcsobject_callback)
 
         
@@ -267,9 +267,9 @@ class MyWindow(Exposure_GUI):
                 output, errors = p.communicate()
                 if len(errors) > 0:
                     output = output + errors
-                self.output.setText(str(output.decode()))
+                self.showOutput(str(output.decode()))
             else:
-                self.output.setText(str(cmdline))
+                self.showOutput(str(cmdline))
 
     def change_object(self):
         object = self.object.text()
@@ -284,9 +284,9 @@ class MyWindow(Exposure_GUI):
                 output, errors = p.communicate()
                 if len(errors) > 0:
                     output = output + errors
-                self.output.setText(str(output.decode()))
+                self.showOutput(str(output.decode()))
             else:
-                self.output.setText(str(cmdline))
+                self.showOutput(str(cmdline))
 
     def change_skypa(self):
         def is_float(input):
@@ -310,9 +310,9 @@ class MyWindow(Exposure_GUI):
                     output, errors = p.communicate()
                     if len(errors) > 0:
                         output = output + errors
-                    self.output.setText(str(output.decode()))
+                    self.showOutput(str(output.decode()))
                 else:
-                    self.output.setText(str(cmdline))
+                    self.showOutput(str(cmdline))
             else:
                 self.skypa.setText("Error")
 
