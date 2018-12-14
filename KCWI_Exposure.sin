@@ -227,7 +227,7 @@ class MyWindow(Exposure_GUI):
 
 
     def update_object(self, value):
-        if self.auto_object_mode is True:
+        if self.auto_object_mode is True and 'unknown' not in value:
             self.showOutput("Automatic object mode is on. Setting object to %s" % str(value))
             self.object.setText(value)
             self.change_object()
