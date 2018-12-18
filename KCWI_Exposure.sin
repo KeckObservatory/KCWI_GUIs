@@ -102,7 +102,7 @@ class keywordMonitor(QThread):
 
         def dcsobject_callback(keyword):
             object = dcsobject['binary']
-            self.dcsobject.emit(str(object))
+            selgof.dcsobject.emit(str(object))
 
 
 
@@ -357,7 +357,8 @@ class MyWindow(Exposure_GUI):
             self.showOutput('Automatic object mode set to ON\n')
             self.showOutput('>>>> DO NOT USE DURING AFTERNOON CALIBRATIONS <<<<\n')
             self.auto_object_mode = True
-            self.update_object()
+            dcsobject = ktl.cache('dcs', 'targname')
+            self.update_object(str(dcsobject.read()))
         else:
             self.showOutput('Automatic object mode set to OFF\n')
             self.auto_object_mode = False
