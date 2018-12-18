@@ -355,7 +355,9 @@ class MyWindow(Exposure_GUI):
     def setAutoObject(self):
         if self.auto_object.isChecked():
             self.showOutput('Automatic object mode set to ON\n')
+            self.showOutput('>>>> DO NOT USE DURING AFTERNOON CALIBRATIONS <<<<\n')
             self.auto_object_mode = True
+            self.update_object()
         else:
             self.showOutput('Automatic object mode set to OFF\n')
             self.auto_object_mode = False
