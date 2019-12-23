@@ -121,7 +121,7 @@ class App(QWidget):
         self.height = 600
         self.programId = ''
         #self.runMode = 'debug'
-        self.runMode = 'debug'
+        self.runMode = ''
         self.caltype = 'all'
         self.normal_color = 'LawnGreen'
         self.quit_color = 'Red'
