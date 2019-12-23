@@ -121,7 +121,7 @@ class App(QWidget):
         self.height = 600
         self.programId = ''
         #self.runMode = 'debug'
-        self.runMode = ''
+        self.runMode = 'debug'
         self.caltype = 'all'
         self.normal_color = 'LawnGreen'
         self.quit_color = 'Red'
@@ -399,16 +399,16 @@ class App(QWidget):
             cmdline = os.path.join(kroot,'rel','default','bin', command)
         else:
             cmdline = command
-        print("Running: %s\n" % cmdline)
+        print("Running: %s with arguments %s \n" % (cmdline, str(command_arguments)))
         self.process = QtCore.QProcess(self)
         self.process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
         self.process.readyRead.connect(self.dataReady)
         self.process.finished.connect(self.onFinished)
         self.process.error.connect(self.launchError)
         if self.runMode is 'debug':
-            self.showOutput('Simulation mode\n Running:\n %s' % (cmdline))
+            self.showOutput('Simulation mode\n Running: %s with arguments %s \n' % (cmdline, str(command_arguments)))
         else:
-            self.showOutput('Running: %s\n' % (cmdline))
+            self.showOutput('Running: %s with arguments: %s \n' % (cmdline, str(command_arguments)))
             if csh is True:
                 self.process.start('csh', [cmdline])
             else:
