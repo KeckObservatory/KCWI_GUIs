@@ -445,7 +445,7 @@ class App(QWidget):
             self.output.setText("Output directory does not exist\n")
 
     def run_generate_cal_script(self):
-        if self.useLampShutters.isChecked:
+        if self.useLampShutters.isChecked():
             command_arguments='-use_lamp_shutters'
         else:
             command_arguments=""
