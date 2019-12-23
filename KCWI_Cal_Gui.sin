@@ -446,7 +446,7 @@ class App(QWidget):
 
     def run_generate_cal_script(self):
         if self.useLampShutters.isChecked:
-            command_arguments='-no_lamp_shutters'
+            command_arguments='-use_lamp_shutters'
         else:
             command_arguments=""
         self.run_command_qprocess('generate_cal_script.py',command_arguments=[command_arguments], use_kroot=True)
