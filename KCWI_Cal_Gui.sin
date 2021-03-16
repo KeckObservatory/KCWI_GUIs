@@ -194,6 +194,11 @@ class App(QWidget):
         self.radiobutton.toggled.connect(self.on_radio_button_toggled)
         self.hlayout3.addWidget(self.radiobutton)
 
+        # use lamp shutters or not
+        self.useLampShutters = QCheckBox('Use arc lamp shutters (DEFAULT=OFF')
+        self.useLampShutters.setCheckState(QtCore.Qt.UnChecked)
+        self.useLampShutters.clicked.connect(self.on_lamp_Shutters_toggled)
+
         self.runcals = QPushButton('4 - Run cals')
         self.runcals.setStyleSheet("background-color : %s" % self.normal_color)
         self.alldone = QPushButton('Quit')
@@ -224,6 +229,7 @@ class App(QWidget):
         self.vlayout1.addWidget(self.genfiles)
         self.vlayout1.addWidget(self.gencals)
         self.vlayout1.addLayout(self.hlayout3)
+        self.vlayout1.addWidget(self.useLampShutters)
         self.vlayout1.addWidget(self.runcals)
         self.vlayout1.addWidget(self.alldone)
 
@@ -393,16 +399,16 @@ class App(QWidget):
             cmdline = os.path.join(kroot,'rel','default','bin', command)
         else:
             cmdline = command
-        print("Running: %s\n" % cmdline)
+        print("Running: %s with arguments %s \n" % (cmdline, str(command_arguments)))
         self.process = QtCore.QProcess(self)
         self.process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
         self.process.readyRead.connect(self.dataReady)
         self.process.finished.connect(self.onFinished)
         self.process.error.connect(self.launchError)
         if self.runMode is 'debug':
-            self.showOutput('Simulation mode\n Running:\n %s' % (cmdline))
+            self.showOutput('Simulation mode\n Running: %s with arguments %s \n' % (cmdline, str(command_arguments)))
         else:
-            self.showOutput('Running: %s\n' % (cmdline))
+            self.showOutput('Running: %s with arguments: %s \n' % (cmdline, str(command_arguments)))
             if csh is True:
                 self.process.start('csh', [cmdline])
             else:
@@ -423,6 +429,14 @@ class App(QWidget):
         self.useOutdir.setCheckState(QtCore.Qt.Unchecked)
         self.setWorkingDirectory()
 
+    def on_lamp_Shutters_toggled(self):
+        if self.useLampShutters.isChecked():
+            self.output.setText(""" Lamp shutters will be used instead of lamps on/off
+            Note that this can lead to arc lines contamination on flat fields
+            Check your flats for possible arc lines contamination""")
+        else:
+            self.output.setText("Using power control to turn on/off arc lamps (DEFAULT)")
+
     def setWorkingDirectory(self):
         if os.path.isdir(self.outdir.text()):
             os.chdir(self.outdir.text())
@@ -431,7 +445,11 @@ class App(QWidget):
             self.output.setText("Output directory does not exist\n")
 
     def run_generate_cal_script(self):
-        self.run_command_qprocess('generate_cal_script.py', use_kroot=True)
+        if self.useLampShutters.isChecked():
+            command_arguments=['-use_lamp_shutters']
+        else:
+            command_arguments=[]
+        self.run_command_qprocess('generate_cal_script.py',command_arguments=command_arguments, use_kroot=True)
 
     def run_generate_cal_files(self):
         self.run_command_qprocess('generate_cal_files.csh', use_kroot=False, csh=True)
