@@ -166,7 +166,6 @@ class App(QWidget):
         self.init_ui()
         self.processOutput='Click on the right or define'
         self.start_keyword_monitor()
-        self.setWorkingDirectory()
 #         self.runOutdir()
 
 
@@ -505,6 +504,7 @@ class App(QWidget):
 
     def update_outdir_status(self, value):
         self.outdir.setText(value)
+        self.setWorkingDirectory()
 
     def start_keyword_monitor(self):
         self.keyword_thread = keywordMonitor()
