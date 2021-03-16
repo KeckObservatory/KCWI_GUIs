@@ -239,7 +239,7 @@ class App(QWidget):
         self.useLampShutters.setCheckState(QtCore.Qt.Unchecked)
         self.useLampShutters.clicked.connect(self.on_lamp_Shutters_toggled)
 
-        self.runcals = QPushButton('4 - Run cals')
+        self.runcals = QPushButton('Run calibrations')
         self.runcals.setStyleSheet("background-color : %s" % self.normal_color)
         self.alldone = QPushButton('Quit')
         self.alldone.setStyleSheet("background-color : %s" % self.quit_color)
@@ -374,9 +374,11 @@ class App(QWidget):
         self.output.setText(str(checked_list))
 
     def prepareCalScripts(self):
+        self.prepare.setEnabled(False)
         self.saveStates()
         self.run_generate_cal_script()
         self.run_generate_cal_files()
+        self.prepare.setEnabled(True)
 
     def saveStates(self):
         output = ''
@@ -502,6 +504,10 @@ class App(QWidget):
         self.run_command_qprocess('generate_cal_files.csh', use_kroot=False, csh=True)
 
     def run_calibrations(self):
+        self.runcals.setEnabled(False)
+        self.output.setText("************************ KCWI CALIBRATION SYSTEM *************************")
+        self.output.setText("                          Calibrations started")
+        self.output.setText("**************************************************************************")
         if self.caltype == 'all':
             script = 'all_calibrations.csh'
         elif self.caltype == 'internal':
@@ -510,6 +516,7 @@ class App(QWidget):
             script = 'dome_calibrations.csh'
 
         self.run_command_qprocess(script, use_kroot=False, csh=True)
+        self.prepare.setEnabled(True)
 
     def update_outdir_status(self, value):
         self.outdir.setText(value)
