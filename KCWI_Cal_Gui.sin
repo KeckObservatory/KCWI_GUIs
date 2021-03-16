@@ -166,6 +166,7 @@ class App(QWidget):
         self.init_ui()
         self.processOutput='Click on the right or define'
         self.start_keyword_monitor()
+        self.setWorkingDirectory()
 #         self.runOutdir()
 
 
