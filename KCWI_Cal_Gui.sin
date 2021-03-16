@@ -206,12 +206,14 @@ class App(QWidget):
         self.reload.setStyleSheet("background-color : %s" % self.optional_color)
         self.list = QPushButton('List checked configurations')
         self.list.setStyleSheet("background-color : %s" % self.optional_color)
-        self.save = QPushButton('1 - Save states to disk')
-        self.save.setStyleSheet("background-color : %s" % self.normal_color)
-        self.genfiles = QPushButton('2 - Generate calibration scripts')
-        self.genfiles.setStyleSheet("background-color : %s" % self.normal_color)
-        self.gencals = QPushButton('3 - Generate calibration flat files')
-        self.gencals.setStyleSheet("background-color : %s" % self.normal_color)
+        self.prepare = QPushButton('Prepare calibration scripts')
+        self.prepare.setStyleSheet("background-color : %s" % self.normal_color)
+#         self.save = QPushButton('1 - Save states to disk')
+#         self.save.setStyleSheet("background-color : %s" % self.normal_color)
+#         self.genfiles = QPushButton('2 - Generate calibration scripts')
+#         self.genfiles.setStyleSheet("background-color : %s" % self.normal_color)
+#         self.gencals = QPushButton('3 - Generate calibration flat files')
+#         self.gencals.setStyleSheet("background-color : %s" % self.normal_color)
 
         # radio buttons for calibrations
         self.hlayout3 = QHBoxLayout()
@@ -249,10 +251,11 @@ class App(QWidget):
         self.program.textChanged.connect(self.set_program)
         self.reload.clicked.connect(self.refresh_data)
         self.list.clicked.connect(self.ListConfigs)
-        self.save.clicked.connect(self.saveStates)
-        self.genfiles.clicked.connect(self.run_generate_cal_script)
+        self.prepare.clicked.connect(self.prepareCalScripts)
+#         self.save.clicked.connect(self.saveStates)
+#         self.genfiles.clicked.connect(self.run_generate_cal_script)
         #self.genfiles.clicked.connect(self.showcurrent)
-        self.gencals.clicked.connect(self.run_generate_cal_files)
+#         self.gencals.clicked.connect(self.run_generate_cal_files)
         self.runcals.clicked.connect(self.run_calibrations)
         self.alldone.clicked.connect(self.quit)
 
@@ -263,9 +266,10 @@ class App(QWidget):
         self.vlayout1 = QVBoxLayout()
         #self.vlayout1.addWidget(self.list)
         self.vlayout1.addWidget(self.reload)
-        self.vlayout1.addWidget(self.save)
-        self.vlayout1.addWidget(self.genfiles)
-        self.vlayout1.addWidget(self.gencals)
+        self.vlayout1.addWidget(self.prepare)
+#         self.vlayout1.addWidget(self.save)
+#         self.vlayout1.addWidget(self.genfiles)
+#         self.vlayout1.addWidget(self.gencals)
         self.vlayout1.addLayout(self.hlayout3)
         self.vlayout1.addWidget(self.useLampShutters)
         self.vlayout1.addWidget(self.runcals)
@@ -368,6 +372,11 @@ class App(QWidget):
             if self.tableWidget.cellWidget(i, 0).findChild(type(QCheckBox())).isChecked():
                 checked_list.append(self.tableWidget.item(i, 1).text())
         self.output.setText(str(checked_list))
+
+    def prepareCalScripts(self):
+        self.saveStates()
+        self.run_generate_cal_script()
+        self.run_generate_cal_files()
 
     def saveStates(self):
         output = ''
