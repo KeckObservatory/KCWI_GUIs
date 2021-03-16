@@ -196,7 +196,7 @@ class App(QWidget):
 
         # use lamp shutters or not
         self.useLampShutters = QCheckBox('Use arc lamp shutters (DEFAULT=OFF')
-        self.useLampShutters.setCheckState(QtCore.Qt.UnChecked)
+        self.useLampShutters.setCheckState(QtCore.Qt.Unchecked)
         self.useLampShutters.clicked.connect(self.on_lamp_Shutters_toggled)
 
         self.runcals = QPushButton('4 - Run cals')
