@@ -1,5 +1,12 @@
 #! @KPYTHON3@
 
+try:
+    import ktl
+    useKTL = True
+except:
+    print("KTL not available")
+    useKTL = False
+
 import sys, os, subprocess
 from PyQt5.QtWidgets import QWidget, QHBoxLayout,QTableWidget, QTableWidgetItem, QVBoxLayout, QRadioButton
 from PyQt5.QtWidgets import QPushButton, QCheckBox, QLineEdit, QLabel, QApplication, QTextEdit
@@ -8,6 +15,8 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 #from ConfigManager import save_state, state_file_name
 #from QtCore import QStringList
+from PyQt5.QtCore import QThread, pyqtSignal, QProcess
+
 
 class KCWIConfig():
     def __init__(self, configurationName, programId):
@@ -110,6 +119,34 @@ def state_file_name(stateName, programId):
     return fileName
 
 
+class keywordMonitor(QThread):
+    outdir_status = pyqtSignal('QString')
+
+    def __init__(self):
+        QThread.__init__(self)
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        if useKTL is False:
+            return
+
+        def status_callback(keyword):
+            if keyword == outdir_status:
+                signal = self.outdir_status
+
+            value = keyword['binary']
+            signal.emit(str(value))
+
+        outdir_status = ktl.cache('kbds', 'outdir')
+
+        outdir_status.callback(status_callback)
+        outdir_status.monitor()
+
+        while True:
+            self.sleep(1)
+
 
 class App(QWidget):
     def __init__(self):
@@ -128,7 +165,8 @@ class App(QWidget):
         self.optional_color = 'Gold'
         self.init_ui()
         self.processOutput='Click on the right or define'
-        self.runOutdir()
+        self.start_keyword_monitor()
+#         self.runOutdir()
 
 
     def init_ui(self):
@@ -138,25 +176,25 @@ class App(QWidget):
         self.program.setFixedWidth(100)
         # output directory
         self.lbl2 = QLabel('Output directory')
-        self.outdir = QLineEdit()
-        self.outdir.setFixedWidth(300)
-        self.outdir.editingFinished.connect(self.setWorkingDirectory)
+        self.outdir = QLabel()
+#         self.outdir.setFixedWidth(300)
+#         self.outdir.editingFinished.connect(self.setWorkingDirectory)
         # use outdir for output directory
-        self.useOutdir = QCheckBox('Use KCWI outdir')
-        self.useOutdir.setCheckState(QtCore.Qt.Checked)
-        self.useOutdir.clicked.connect(self.runOutdir)
+#         self.useOutdir = QCheckBox('Use KCWI outdir')
+#         self.useOutdir.setCheckState(QtCore.Qt.Checked)
+#         self.useOutdir.clicked.connect(self.runOutdir)
         # use current directory
-        self.usePwd = QCheckBox('Use current directory')
-        self.usePwd.setCheckState(QtCore.Qt.Unchecked)
-        self.usePwd.clicked.connect(self.runPwd)
+#         self.usePwd = QCheckBox('Use current directory')
+#         self.usePwd.setCheckState(QtCore.Qt.Unchecked)
+#         self.usePwd.clicked.connect(self.runPwd)
 
         self.hlayout1 = QHBoxLayout()
         self.hlayout1.addWidget(self.lbl1)
         self.hlayout1.addWidget(self.program)
         self.hlayout1.addWidget(self.lbl2)
         self.hlayout1.addWidget(self.outdir)
-        self.hlayout1.addWidget(self.useOutdir)
-        self.hlayout1.addWidget(self.usePwd)
+#         self.hlayout1.addWidget(self.useOutdir)
+#         self.hlayout1.addWidget(self.usePwd)
         self.hlayout1.addStretch(3)
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.right, self.width, self.height)
@@ -464,7 +502,13 @@ class App(QWidget):
 
         self.run_command_qprocess(script, use_kroot=False, csh=True)
 
+    def update_outdir_status(self, value):
+        self.outdir.setText(value)
 
+    def start_keyword_monitor(self):
+        self.keyword_thread = keywordMonitor()
+        self.keyword_thread.outdir_status.connect(self.update_outdir_status)
+        self.keyword_thread.start()
 
 
 
