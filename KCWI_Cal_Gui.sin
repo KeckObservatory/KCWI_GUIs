@@ -245,7 +245,7 @@ class App(QWidget):
         self.alldone.setStyleSheet("background-color : %s" % self.quit_color)
 
 
-        buttons = [self.reload,self.list,self.save, self.gencals, self.genfiles, self.runcals, self.alldone]
+        buttons = [self.reload,self.list,self.prepare, self.runcals, self.alldone]
         for button in buttons:
                 button.setFixedWidth(buttonSize)
         self.program.textChanged.connect(self.set_program)
