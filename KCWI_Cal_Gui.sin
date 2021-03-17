@@ -16,6 +16,7 @@ from PyQt5 import QtGui
 #from ConfigManager import save_state, state_file_name
 #from QtCore import QStringList
 from PyQt5.QtCore import QThread, pyqtSignal, QProcess
+import time
 
 
 class KCWIConfig():
@@ -375,10 +376,14 @@ class App(QWidget):
 
     def prepareCalScripts(self):
         self.prepare.setEnabled(False)
+        self.prepare.setText("Running")
+        self.prepare.repaint()
         self.saveStates()
         self.run_generate_cal_script()
         self.run_generate_cal_files()
         self.prepare.setEnabled(True)
+        self.prepare.setText("Prepare calibration scripts")
+
 
     def saveStates(self):
         output = ''
@@ -508,6 +513,8 @@ class App(QWidget):
         self.output.setText("************************ KCWI CALIBRATION SYSTEM *************************")
         self.output.setText("                          Calibrations started")
         self.output.setText("**************************************************************************")
+        self.runcals.setText("Running")
+        self.runcals.repaint()
         if self.caltype == 'all':
             script = 'all_calibrations.csh'
         elif self.caltype == 'internal':
@@ -516,7 +523,8 @@ class App(QWidget):
             script = 'dome_calibrations.csh'
 
         self.run_command_qprocess(script, use_kroot=False, csh=True)
-        self.prepare.setEnabled(True)
+        self.runcals.setEnabled(True)
+        self.runcals.setText("Run calibrations")
 
     def update_outdir_status(self, value):
         self.outdir.setText(value)
